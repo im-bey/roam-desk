@@ -1,0 +1,1156 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ROAM Stock Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one narrow working column. Sticky header with sync status, five big tabs (Stock, Bags, Slips, Money, Photos), big tap targets for older staff. */
+:root{
+  --bg:#F3F6F4; --surface:#FFFFFF; --ink:#16231F; --muted:#5B6B66; --line:#D9E2DE;
+  --accent:#1D6B58; --accent-ink:#FFFFFF; --accent-soft:#DDEEE8;
+  --good:#1D7A46; --good-soft:#DCF1E4; --warn:#9A5B00; --warn-soft:#FBEBCB; --bad:#B3261E; --bad-soft:#F8DAD7;
+  --shadow:0 1px 2px rgba(22,35,31,.08),0 6px 18px rgba(22,35,31,.06);
+  --display:"Bricolage Grotesque","Figtree",system-ui,sans-serif; --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1A17; --surface:#16251F; --ink:#E8F0EC; --muted:#93A59E; --line:#2A3B35;
+  --accent:#4FC3A1; --accent-ink:#06231B; --accent-soft:#1B3A31;
+  --good:#5BD28C; --good-soft:#173A27; --warn:#F2B24A; --warn-soft:#3F2F0E; --bad:#FF8A80; --bad-soft:#4A1E1B;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1A17; --surface:#16251F; --ink:#E8F0EC; --muted:#93A59E; --line:#2A3B35;
+  --accent:#4FC3A1; --accent-ink:#06231B; --accent-soft:#1B3A31;
+  --good:#5BD28C; --good-soft:#173A27; --warn:#F2B24A; --warn-soft:#3F2F0E; --bad:#FF8A80; --bad-soft:#4A1E1B;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 0 10px;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font:700 24px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.sync{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--good)}.dot.err{background:var(--bad)}.dot.busy{background:var(--warn)}
+.btn{min-height:44px;padding:0 18px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:40px;padding:0 14px;font-size:15px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.fill{background:var(--bad);color:#fff}
+.acts.more{margin-top:-2px}
+.acts.more .btn{flex:0 1 auto;min-height:36px;font-size:14px;padding:0 12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+nav button{min-height:48px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:16px;padding:0 2px}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+main{padding-top:16px;display:flex;flex-direction:column;gap:16px}
+.banner{border-radius:12px;padding:14px 16px;background:var(--warn-soft);color:var(--ink);border:1.5px solid var(--warn)}
+.banner b{display:block;margin-bottom:2px}
+.banner.bad{background:var(--bad-soft);border-color:var(--bad)}
+.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.chip{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left}
+.chip .n{font:700 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.chip .l{font-size:15px;color:var(--muted)}
+.chip.on{border-color:var(--accent);background:var(--accent-soft)}
+.tools{display:grid;grid-template-columns:1fr auto;gap:8px}
+.tools input,.tools select,.field input,.field select{min-height:46px;width:100%;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);padding:0 12px}
+.tools select{max-width:190px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
+.row .name{font-weight:600;overflow-wrap:anywhere}
+.row .cat{font-size:13px;color:var(--muted)}
+.qty{text-align:right}
+.prices{display:grid;grid-template-columns:repeat(3,auto);gap:6px 16px;margin-top:6px;justify-content:start}
+.prices .l{display:block;font-size:12px;color:var(--muted)}.prices.profit{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line,#ddd)}.prices b{font-variant-numeric:tabular-nums}
+.sect{background:var(--bg);border-radius:10px;padding:10px 12px}.sect h4{margin:0 0 6px;font:700 15px var(--display)}
+.ln{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:15px;font-variant-numeric:tabular-nums}.ln span:first-child{overflow-wrap:anywhere}
+.ln.tot{border-top:1.5px solid var(--line);margin-top:4px;padding-top:8px;font-weight:700}.ln.sub{color:var(--muted)}.ln.neg span:last-child{color:var(--bad)}
+.qty .n{font:700 28px/1 var(--display);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.pill.ok{background:var(--good-soft);color:var(--good)}.pill.low{background:var(--warn-soft);color:var(--warn)}.pill.out{background:var(--bad-soft);color:var(--bad)}
+.acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.acts .btn{flex:1 1 90px}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1.5px dashed var(--line);border-radius:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tile{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px}
+.tile .l{font-size:14px;color:var(--muted);font-weight:600}
+.tile .v{font:700 30px/1.15 var(--display);margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .h{font-size:13px;color:var(--muted);margin-top:4px}
+.tile.good .v{color:var(--good)}.tile.bad .v{color:var(--bad)}
+.tile.bk{cursor:pointer;position:relative;transition:transform .15s,box-shadow .15s,border-color .15s}.tile.bk.open{grid-column:1/-1}.tile.bk .chev{font-size:12px;margin-left:6px}
+.tile.bk:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.14);border-color:var(--good)}
+.tile.salescard{margin-bottom:10px}
+.tile.bk .clk{position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;letter-spacing:.02em;padding:4px 9px;border-radius:999px;background:var(--good);color:#fff;display:flex;gap:5px;align-items:center}
+.tile.bk .l{padding-right:84px}
+.tile.bk .prog{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 4px}.tile.bk .prog>i{display:block;height:100%;background:var(--good);border-radius:99px}
+@media (prefers-reduced-motion:reduce){.tile.bk{transition:none}.tile.bk:hover{transform:none}}
+.tile.bk:focus-visible{outline:3px solid var(--good);outline-offset:2px}
+.bkd{margin-top:12px;border-top:1.5px solid var(--line);padding-top:10px;cursor:default}
+.bkd .ln{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:15px;font-variant-numeric:tabular-nums}
+.bkd .ln.neg span:last-child{color:var(--bad)}.bkd .ln.tot{font-weight:700;border-top:1px solid var(--line)}
+h2{font:700 19px/1.2 var(--display);margin:6px 0 0}
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.bar .t span:last-child{font-variant-numeric:tabular-nums}
+.bar .track{height:12px;border-radius:99px;background:var(--accent-soft);margin-top:5px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:99px;min-width:0}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.act-add{color:var(--good);font-weight:700}.act-sold{color:var(--accent);font-weight:700}.act-remove,.act-used{color:var(--warn);font-weight:700}
+.bag{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.bag .head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.bag h3{font:700 19px/1.2 var(--display);margin:0;overflow-wrap:anywhere}
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.nums div{background:var(--bg);border-radius:10px;padding:8px 10px}
+.nums .l{font-size:12px;color:var(--muted)}.nums .v{font-weight:700;font-variant-numeric:tabular-nums}
+.items{display:flex;flex-direction:column}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .x{min-height:36px;min-width:36px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--muted)}
+.overlay{position:fixed;inset:0;background:rgba(10,20,17,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px;max-height:92%;overflow:auto}
+@media (min-width:640px){.overlay{align-items:center}.sheet{border-radius:18px}}
+.sheet h3{font:700 22px/1.15 var(--display);margin:0;overflow-wrap:anywhere}
+.sheet .sub{color:var(--muted);margin-top:-8px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:15px}
+.stepper{display:grid;grid-template-columns:56px 1fr 56px;gap:8px}
+.stepper button{min-height:56px;font-size:26px;font-weight:700;border-radius:10px;border:1.5px solid var(--line);background:var(--bg)}
+.stepper input{min-height:56px;text-align:center;font:700 26px var(--display);border-radius:10px;border:1.5px solid var(--line);background:var(--surface);width:100%}
+.preview{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-weight:600}
+.err{color:var(--bad);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;z-index:30;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+.note{color:var(--muted);font-size:14px}
+.drop{border:2.5px dashed var(--accent);background:var(--accent-soft);border-radius:14px;padding:26px 16px;text-align:center;font-weight:600}
+.drop.over{background:var(--surface)}.drop small{display:block;font-weight:400;color:var(--muted);margin-top:6px}
+.pend{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px}
+.pend img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--bg)}
+.pend select{min-height:42px;width:100%;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);padding:0 8px;margin-top:4px}
+.sl{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.sl.warn{border-color:var(--warn)}.sl .t{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.sl select,.sl input[type=text],.sl input:not([type]){min-height:44px;width:100%;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);padding:0 8px}
+.sl .g3{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.sl .g3 label{font-size:12px;color:var(--muted);display:block}
+.sl .x{min-height:44px;min-width:44px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--muted)}
+.sl .cn{font-size:14px;color:var(--warn)}.sl .cn label{display:flex;gap:8px;align-items:center;color:var(--ink)}.sl .cn input{width:22px;height:22px}
+.thumb{width:100%;max-height:180px;object-fit:contain;border-radius:10px;background:var(--bg)}
+.pill.wait{background:var(--warn-soft);color:var(--warn)}.pill.none{background:var(--bg);color:var(--muted)}
+.prow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.prow:last-child{border-bottom:0}.prow span:first-child{overflow-wrap:anywhere}
+@media (max-width:460px){nav button{font-size:14px}.nums{grid-template-columns:repeat(2,minmax(0,1fr))}.tile .v{font-size:25px}.tools{grid-template-columns:1fr}.tools select{max-width:none}}
+@media (prefers-reduced-motion:no-preference){.overlay{animation:fade .15s ease-out}@keyframes fade{from{opacity:0}}}
+/* hover and press feedback so every button looks clickable */
+button:not(:disabled),.drop{cursor:pointer;transition:background-color .15s,border-color .15s,box-shadow .15s,transform .1s}
+.btn:not(:disabled):hover,nav button:not(:disabled):hover,.chip:hover,.item .x:hover,.sl .x:hover{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 2px 8px rgba(0,0,0,.14);transform:translateY(-1px)}
+.btn.primary:not(:disabled):hover,nav button[aria-selected="true"]:hover{background:var(--accent);filter:brightness(1.12);box-shadow:0 3px 10px rgba(0,0,0,.28)}
+.btn.danger:not(:disabled):hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn:not(:disabled):active,nav button:active,.chip:active{transform:translateY(0);box-shadow:none}
+.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>ROAM Stock Desk</h1>
+      <div class="sync"><span class="dot busy" id="dot"></span><span id="syncText">Connecting…</span><button class="btn sm" id="refresh" type="button">Get latest</button></div>
+    </div>
+    <nav role="tablist" aria-label="Sections">
+      <button role="tab" id="tab-stock" aria-selected="true" data-tab="stock" type="button">My Stock</button>
+      <button role="tab" id="tab-bags" aria-selected="false" data-tab="bags" type="button">Freshi Bag</button>
+      <button role="tab" id="tab-slips" aria-selected="false" data-tab="slips" type="button">Add Stock</button>
+      <button role="tab" id="tab-money" aria-selected="false" data-tab="money" type="button">Money</button>
+    </nav>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const SS = "13s7Ng4OrLFa_A0tkZMjMXSvvx0Z2CgBOaHhrlfVsxxk";
+const SERVERS = ["Composio", "composio"];   // the connector is called "Composio" or "composio" depending on the account
+let SERVER_USED = SERVERS[0];
+const CHANNELS = ["Uber Eats", "WhatsApp", "Market", "Freshi"];
+const chLbl = c => c === "WhatsApp" ? "WhatsApp/Webstore" : c;   // label only; the sheet keeps the value "WhatsApp"
+// Rates live in the sheet tab "Assumptions" (loaded below). These are only fallbacks.
+const A0 = {uberComm:0.30, vat:0.15, uberMargin:0.30, waMargin:null, minDisc:0.5, fee:0.25, pack:0};
+let CAT_ID = "1oO3O6kdzqA7BmNq7hWlxQTOi3XOrTKhMyvpPVFglPJ8";   // WhatsApp catalogue sheet (Meta reads it). Overridden by the Assumptions tab.
+const WA_TYPE = {"Donuts/Koeksisters":"Bakery", "Cakes":"Bakery", "Biscuits":"Bakery", "Chocolate":"Clusters", "Biltong":"Biltong", "Dried Fruit":"Snacks", "Pop-Corn":"Snacks", "Cool-Drink":"Drinks", "Bags":"Party Bags", "Party Boxes":"Party Bags"};
+const MAX_B64 = 120000, CHUNK = 40000;   // a product photo is stored in the Photos tab as up to 3 text cells
+const MAX_SLIP_B64 = 300000;               // a slip photo is stored in the Slips tab as up to 8 text cells (the agent files it to Drive by month)
+const SLIP_COLS = ["I","J","K","L","M","N","O","P"];
+const ZAR = new Intl.NumberFormat("en-ZA", {style:"currency", currency:"ZAR"});
+const money = n => ZAR.format(Number(n) || 0);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = x => (typeof x === "number" ? x : (x === "" || x == null ? null : (isFinite(Number(x)) ? Number(x) : null)));
+
+let mcp = null, sample = null;
+const S = {assump:{...A0}, photos:{}, photoRows:1, pending:[], slips:[], slipRows:1, alias:{}, scan:null, canScan:false, wa:{sig:"", at:null, count:0, error:null}, tab:"stock", promos:[], noPromo:false, skip:{}, pc:{}, cat:[], bags:[], items:[], sum:{}, recent:[], q:"", category:"", filter:"all", loaded:false, error:null, busy:false, updated:null};
+
+/* ---------- Sheet access (Composio -> Google Sheets, ROAM account) ---------- */
+async function run(slug, args) {
+  const key = localStorage.getItem("roamKey") || "";
+  let r;
+  try { r = await fetch("/api/sheets", {method:"POST", headers:{"content-type":"application/json", "x-dash-key":key}, body:JSON.stringify({slug, args})}); }
+  catch (_) { const e = new Error("offline"); e.code = "server_unavailable"; throw e; }
+  if (r.status === 401) { localStorage.removeItem("roamKey"); const e = new Error("Wrong or missing password."); e.code = "needs_auth"; throw e; }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || "The sheet did not accept that."); e.code = "sheet"; throw e; }
+  return j.data;
+}
+function nowStamp() {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+const appendLog = rows => run("GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND", {spreadsheetId:SS, range:"'Stock Log'!A:L", valueInputOption:"RAW", insertDataOption:"INSERT_ROWS", values:rows});
+
+async function load() {
+  setStatus("busy", "Updating…");
+  try {
+    const d = await run("GOOGLESHEETS_BATCH_GET", {spreadsheet_id:SS, valueRenderOption:"UNFORMATTED_VALUE",
+      ranges:["Catalogue!A1:U300", "'Freshi Bags'!A1:B100", "'Freshi Bag Items'!A1:D600", "Summary!A1:B30", "Summary!D2:K13", "Assumptions!A1:B12", "Photos!A1:F200", "Slips!A1:H400", "Aliases!A1:B600", "Promos!A1:N30", "Fees!A1:I22", "'Stock Log'!A1:L8000"]});
+    const v = d.valueRanges.map(x => x.values || []);
+    S.cat = v[0].slice(1).map((r, i) => ({row:i+2, name:r[0], category:r[1] || "Other", pack:num(r[2]) || 1, cost:num(r[3]) || 0,
+      uber:num(r[4]), wa:num(r[5]), stock:num(r[6]) || 0, active:(r[8] || "Y") !== "N", typed:num(r[9]), gift:String(r[12] || ""), mgift:String(r[13] || "").split("|").map(x => x.trim()).filter(Boolean), mgq:num(r[14]) || 1, mid:String(r[15] || "").trim(), mtitle:String(r[16] || "").trim(), mdesc:String(r[17] || "").trim(), mcat:String(r[18] || "").trim(), mimg:String(r[19] || "").trim(), always:String(r[20] || "").trim().toUpperCase() === "Y"})).filter(p => p.name);
+    S.bags = v[1].slice(1).map((r, i) => ({row:i+2, name:r[0], full:num(r[1]) || 0})).filter(b => b.name);
+    S.items = v[2].slice(1).map((r, i) => ({row:i+2, bag:r[0], product:r[1], qty:num(r[2]) || 0, line:num(r[3]) || 0})).filter(x => x.bag && x.product);
+    const am = {}; (v[5] || []).slice(1).forEach(r => { if (r[0]) am[String(r[0])] = num(r[1]); });
+    const g = (k, d) => { const key = Object.keys(am).find(x => x.toLowerCase().startsWith(k)); return key && am[key] != null ? am[key] : d; };
+    S.assump = {uberComm:g("uber commission", A0.uberComm), vat:g("vat", A0.vat), uberMargin:g("uber target", A0.uberMargin), waMargin:g("whatsapp margin", null), minDisc:g("freshi discount", A0.minDisc), fee:g("freshi fee", A0.fee), pack:g("packaging", 0)};
+    const ci = (v[5] || []).find(r => /catalogue sheet/i.test(String(r[0]))); if (ci && ci[1]) CAT_ID = String(ci[1]);
+    S.photos = {}; S.photoRows = 1;
+    (v[6] || []).forEach((r, i) => { if (i === 0 || !r[0]) return; S.photoRows = Math.max(S.photoRows, i + 1); S.photos[String(r[0]).toLowerCase()] = {row:i + 1, status:r[1] || "", link:r[2] || "", added:r[3] || "", id:r[4] || ""}; });
+    S.slips = []; S.slipRows = 1;
+    (v[7] || []).forEach((r, i) => { if (i === 0 || !r[0]) return; S.slipRows = Math.max(S.slipRows, i + 1); S.slips.push({row:i + 1, date:r[0], status:r[1] || "", fp:String(r[2] || ""), total:num(r[3]), note:r[4] || ""}); });
+    S.alias = {}; (v[8] || []).forEach((r, i) => { if (i && r[0] && r[1]) S.alias[norm(r[0])] = String(r[1]); });
+    S.sum = {}; v[3].slice(1).forEach(r => { if (r[0]) S.sum[r[0]] = num(r[1]) || 0; });
+    S.recent = v[4].filter(r => r.length >= 3 && !String(r[0]).startsWith("#"));
+    S.promos = (v[9] || []).slice(1).filter(r => r[0]).map(r => ({name:String(r[0]), type:String(r[1] || ""), channel:String(r[2] || ""), gift:String(r[3] || ""), min:num(r[4]) || 0, pct:num(r[5]) || 0,
+      items:String(r[6] || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean), fee:num(r[7]) || 0, days:String(r[8] || ""), from:r[9] ?? "", to:r[10] ?? "",
+      start:r[11] ?? "", end:r[12] ?? "", on:String(r[13] || "Y").toUpperCase() !== "N"}));
+    S.sales = (v[11] || []).slice(1).filter(r => String(r[2] || "").toUpperCase() === "SOLD" && num(r[5]) > 0).map(r => {
+      const m = String(r[0] || "").match(/(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/); if (!m) return null;
+      return {t:new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 12), +(m[5] || 0)).getTime(), v:num(r[5])};
+    }).filter(Boolean).sort((a, b) => a.t - b.t);
+    /* what each promo has cost so far (for the Money tab: take any promo out one by one) */
+    const MENU = "Menu gifts (free item inside the Uber menu)";
+    S.pc = {}; S.pc[MENU] = {disc:0, fee:0, gift:0, commAdj:0, orders:0};
+    S.promos.forEach(p => { S.pc[p.name] = {disc:0, fee:0, gift:0, commAdj:0, orders:0}; });
+    (v[11] || []).slice(1).forEach(r => {
+      const act = String(r[2] || "").toUpperCase();
+      if (act === "SOLD") String(r[8] || "").split(",").map(x => x.trim()).forEach(nm => {
+        const c = S.pc[nm], p = S.promos.find(x => x.name === nm); if (!c || !p) return;
+        c.orders++; c.fee += p.fee;
+        if (p.pct > 0) { const dd = num(r[9]) || 0; c.disc += dd; if (String(r[4]) === "Uber Eats") c.commAdj += dd * S.assump.uberComm * (1 + S.assump.vat); }
+      });
+      else if (act === "REMOVE") {
+        const h = String(r[7] || "");
+        if (h.startsWith("PROMO GIFT: Menu gift")) S.pc[MENU].gift += num(r[6]) || 0;
+        else if (h.startsWith("PROMO GIFT: ")) { const c = S.pc[h.slice(12).trim()]; if (c) c.gift += num(r[6]) || 0; }
+      }
+    });
+    const fv = v[10] || [];
+    S.feeTypes = fv.slice(3, 9).filter(r => r[0]).map(r => ({name:String(r[0]), what:String(r[1] || ""), how:String(r[2] || ""), where:String(r[3] || ""), total:num(r[4]) || 0}));
+    S.feePromos = fv.slice(11, 22).filter(r => r[0]).map(r => ({name:String(r[0]), type:String(r[1] || ""), channel:String(r[2] || ""), fee:num(r[3]) || 0, orders:num(r[4]) || 0, feeTotal:num(r[5]) || 0, gift:num(r[6]) || 0, disc:num(r[7]) || 0, total:num(r[8]) || 0}));
+    S.loaded = true; S.error = null; S.updated = new Date();
+    setStatus("ok", "Updated " + S.updated.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
+    syncCatalog();
+  } catch (e) {
+    S.error = e; setStatus("err", "Not connected");
+  }
+  render();
+}
+function setStatus(kind, text) {
+  document.getElementById("dot").className = "dot " + kind;
+  document.getElementById("syncText").textContent = text;
+}
+function explain(e) {
+  const c = e && e.code;
+  if (c === "needs_auth") return ["Wrong password.", "Reload the page and enter the staff password."];
+  if (c === "server_not_connected" || c === "selection_required") return ["This page cannot use Composio in your Claude account.", "Add Composio under Settings, then Connectors, and allow this page when Claude asks. If Composio is already there, tell Bey. Then press Get latest."];
+  if (c === "needs_reauth") return ["Composio needs you to sign in again.", "Open Settings, then Connectors, reconnect Composio and press Refresh."];
+  if (c === "not_in_manifest" || c === "approval_required" || c === "consent_required") return ["This page is not allowed to use Composio yet.", "Allow it when Claude asks, or use the page's permissions menu, then press Refresh."];
+  if (c === "server_unavailable" || c === "upstream_error") return ["The connection is slow or down.", "Wait a moment and press Refresh. Nothing was lost."];
+  if (c === "sheet" || c === "tool_error") return ["Google Sheets said no.", String(e.message || "").slice(0, 200)];
+  return ["Something went wrong.", String((e && e.message) || "Press Refresh to try again.").slice(0, 200)];
+}
+
+/* ---------- Helpers ---------- */
+const status = p => p.stock <= 0 ? "out" : "ok";
+const statusText = {ok:"In stock", out:"Out"};
+const byName = n => S.cat.find(p => p.name === n);
+function toast(msg) {
+  const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200);
+}
+function bagInfo(b) {
+  const A = S.assump, r2 = x => Math.round(x * 100) / 100;
+  const lines = S.items.filter(i => i.bag === b.name).map(i => {
+    const p = byName(i.product), unit = p ? p.cost : (i.qty ? i.line / i.qty : 0), wa = p ? (p.uber != null ? p.uber : (p.wa != null ? p.wa : null)) : null;
+    return {...i, unit, total:unit * i.qty, stock:p ? p.stock : 0, wa, ratio:wa && unit > 0 ? wa / unit : null};
+  });
+  const cost = lines.reduce((a, i) => a + i.total, 0), worth = lines.reduce((a, i) => a + (i.wa || 0) * i.qty, 0), missing = lines.filter(i => i.wa == null).length;
+  const customer = b.full, fee = customer * A.fee, payout = customer - fee, pack = A.pack || 0;
+  const maxPrice = Math.ceil(worth * (1 - A.minDisc) * 100) / 100, off = worth > 0 ? 1 - customer / worth : 0;
+  const bestPayout = maxPrice * (1 - A.fee), listed = Math.round(customer / (1 - A.minDisc) * 100) / 100;
+  // Freshi shows (minDisc) off whatever original price we enter, so we enter customer / (1 - minDisc). maxPrice is the strict price if the original had to equal the real Uber worth.
+  return {lines, cost, pack, worth, missing, customer, fee, payout, profit:payout - cost - pack, margin:payout ? (payout - cost - pack) / payout : 0,
+    maxPrice, off, listed, over:worth > 0 ? listed / worth - 1 : 0, ok:true, bestPayout, bestProfit:bestPayout - cost - pack};
+}
+// Same rule as the sheet: Uber price = cost x (1 + margin) / (1 - commission x (1 + VAT)), never below the WhatsApp price
+function priceFor(cost, typed) {
+  const A = S.assump, r2 = x => Math.round(x * 100) / 100;
+  const wa = typed != null ? typed : (A.waMargin != null ? r2(cost * (1 + A.waMargin)) : null);
+  const uber = r2(Math.max(cost * (1 + A.uberMargin) / (1 - A.uberComm * (1 + A.vat)), wa || 0));
+  return {wa, uber};
+}
+
+/* ---------- Views ---------- */
+function render() {
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)));
+  const m = document.getElementById("main");
+  if (S.error && !S.loaded) { const [t, h] = explain(S.error); m.innerHTML = `<div class="banner bad"><b>${esc(t)}</b>${esc(h)}</div>`; return; }
+  if (!S.loaded) { m.innerHTML = `<div class="empty">Loading the stock sheet…</div>`; return; }
+  const banner = S.error ? (() => { const [t, h] = explain(S.error); return `<div class="banner"><b>${esc(t)}</b>${esc(h)} Showing the last numbers we got.</div>`; })() : "";
+  m.innerHTML = banner + (S.tab === "stock" ? stockView() : S.tab === "bags" ? bagsView() : S.tab === "slips" ? slipsView() : S.tab === "photos" ? photosView() : moneyView());
+}
+function stockView() {
+  const act = S.cat.filter(p => p.active);
+  const out = act.filter(p => status(p) === "out").length, have = act.length - out;
+  const cats = [...new Set(act.map(p => p.category))].sort();
+  const q = S.q.trim().toLowerCase();
+  let rows = act.filter(p => (!q || p.name.toLowerCase().includes(q)) && (!S.category || p.category === S.category));
+  if (S.filter === "out") rows = rows.filter(p => status(p) === "out");
+  if (S.filter === "have") rows = rows.filter(p => status(p) !== "out");
+  const chip = (k, n, l) => `<button type="button" class="chip ${S.filter === k ? "on" : ""}" data-filter="${k}"><div class="n">${n}</div><div class="l">${l}</div></button>`;
+  return `<div class="summary">${chip("have", have, "Click here to see what is in stock")}${chip("out", out, "Click here to see what is out of stock")}</div>
+  <div class="tools"><input id="q" type="search" placeholder="Search for an item here" value="${esc(S.q)}" aria-label="Search for an item here">
+  <select id="cat" aria-label="Type of product"><option value="">Show all types</option>${cats.map(c => `<option ${c === S.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+  <div class="acts"><button class="btn primary" data-tab="slips" type="button">Stock came in? Click here to add it</button><button class="btn" data-do="prodnew" type="button">+ Add a new product</button>${S.filter !== "all" ? `<button class="btn ghost" data-filter="all" type="button">Show everything</button>` : ""}</div>
+  ${promoGiftLine()}
+  <div class="list">${rows.length ? rows.map(stockRow).join("") : `<div class="empty">Nothing matches. Try another search.</div>`}</div>
+  <p class="note">Stock goes up when you add a slip. It goes down when you press the Sold button or Remove stock. Delete product only hides it. Your past records are kept.</p>
+  <p class="note">${waLine()}</p>`;
+}
+function profitHtml(p) {
+  const A = S.assump, tone = v => v >= 0 ? "var(--good)" : "var(--bad)";
+  const wa = p.wa != null ? p.wa - p.cost : null;
+  const ub = p.uber != null ? p.uber * (1 - A.uberComm * (1 + A.vat)) - p.cost : null;
+  const cell = (l, v) => `<div><span class="l">${l}</span><b style="color:${v == null ? "inherit" : tone(v)}">${v == null ? "–" : money(v)}</b></div>`;
+  return `<div class="prices profit">${cell("Profit on WhatsApp/Webstore", wa)}${cell("Profit on Uber (after Uber's cut)", ub)}</div>${giftHtml(p)}`;
+}
+const GIFT_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 1 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 1 1 0 5"/></svg>`;
+function giftHtml(p) { return p.gift ? `<div class="giftline" style="margin-top:6px;display:inline-flex;gap:6px;align-items:center;background:var(--good-soft);color:var(--good);border-radius:8px;padding:4px 10px;font-weight:600;font-size:15px">${GIFT_SVG}<span>Free gift: ${esc(p.gift)}</span></div>` : ""; }
+function promoGiftLine() {
+  const g = activePromos("Uber Eats").filter(p => p.type.toLowerCase().includes("free"));
+  const d = activePromos("Uber Eats").filter(p => p.pct > 0);
+  const pf = x => x > 1 ? x / 100 : x;
+  return (g.length ? `<div class="panel" style="display:flex;gap:10px;align-items:center;color:var(--good)">${GIFT_SVG}<span style="color:var(--text)">Free gift promo on Uber Eats: ${g.map(p => esc(p.name) + " (gift: " + esc(p.gift) + ", spend R" + p.min + "+)").join("; ")}</span></div>` : "")
+    + (d.length ? `<div class="panel" style="display:flex;gap:10px;align-items:center;color:var(--good)"><span style="font-size:20px">🏷️</span><span style="color:var(--text)">Price promo on Uber Eats today: ${d.map(p => esc(p.name) + " (" + Math.round(pf(p.pct) * 100) + "% off" + (p.items.length ? ", " + esc(p.items.join(", ")) : "") + "). The sold screen fills in the promo price.").join("; ")}</span></div>` : "");
+}
+function stockRow(p) {
+  const s = status(p);
+  return `<div class="row"><div><div class="name">${esc(p.name)}</div><div class="cat">${esc(p.category)}${p.pack > 1 ? " · pack of " + p.pack : ""} · ${photoLink(p.name) ? "photo on WhatsApp" : S.photos[p.name.toLowerCase()] ? "photo waiting" : "no photo"}</div>
+  <div class="prices"><div><span class="l">I paid</span><b>${money(p.cost)}</b></div><div><span class="l">WhatsApp/Webstore price</span><b>${p.wa != null ? money(p.wa) : "–"}</b></div><div><span class="l">Uber price</span><b>${p.uber != null ? money(p.uber) : "–"}</b></div></div>${profitHtml(p)}</div>
+  <div class="qty">${isMadeBag(p) ? `<span class="pill ok">Made to order</span>` : `<div class="n">${p.stock}</div><span class="pill ${s}">${statusText[s]}</span>`}</div>
+  <div class="acts"><button class="btn primary" style="min-height:48px;font-size:17px" data-do="${isMadeBag(p) ? "bagsell" : "sold"}" data-row="${p.row}" type="button">${isMadeBag(p) ? "👆 Click me if you sold this bag" : "👆 Click me if you sold me"}</button></div>
+  <div class="acts more"><button class="btn ghost" data-do="remove" data-row="${p.row}" type="button">Remove stock</button><button class="btn ghost" data-do="prodren" data-row="${p.row}" type="button">Edit product</button><button class="btn ghost danger" data-do="proddel" data-row="${p.row}" type="button">Delete…</button></div></div>`;
+}
+function feesPanel() {
+  const ft = (S.feeTypes || []).map(f => `<tr><td><b>${esc(f.name)}</b></td><td>${esc(f.what)}<br><span class="note">${esc(f.how)}</span></td><td>${esc(f.where)}</td><td class="num">${money(f.total)}</td></tr>`).join("");
+  const fp = (S.feePromos || []).map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="note">${esc(p.type)} · ${esc(chLbl(p.channel))}</span></td><td class="num">${money(p.fee)}</td><td class="num">${p.orders}</td><td class="num">${money(p.feeTotal)}</td><td class="num">${money(p.gift)}</td><td class="num">${money(p.disc)}</td><td class="num">${money(p.total)}</td></tr>`).join("");
+  if (!ft && !fp) return "";
+  return `<div class="panel"><h2>Fees and what they are for</h2><p class="note">Use this to match your Uber statement. Uber's 34.5% is 30% commission plus 15% VAT on it.</p>
+  ${ft ? `<div class="tablewrap"><table><thead><tr><th>Fee</th><th>What it is</th><th>On the statement</th><th class="num">So far</th></tr></thead><tbody>${ft}</tbody></table></div>` : ""}
+  ${fp ? `<h2 style="margin-top:16px">Each promo</h2><div class="tablewrap"><table><thead><tr><th>Promo</th><th class="num">Fee per order</th><th class="num">Orders</th><th class="num">Fees</th><th class="num">Gifts</th><th class="num">Discounts</th><th class="num">Total cost</th></tr></thead><tbody>${fp}</tbody></table></div>` : ""}</div>`;
+}
+function salesCard() {
+  const rows = S.sales || [];
+  const head = `<div class="l">Sales volume</div>`;
+  if (!rows.length) return `<div class="tile salescard">${head}<div class="h">No sales recorded yet. Bars appear here as sales are recorded.</div></div>`;
+  const byDay = {}; rows.forEach(r => { const d = new Date(r.t), k = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); (byDay[k] = byDay[k] || {t:r.t, n:0}).n++; });
+  const days = Object.values(byDay).sort((a, b) => a.t - b.t).slice(-14);
+  const fmt = t => new Date(t).toLocaleDateString([], {day:"numeric", month:"short"});
+  const W = 640, H = 96, T = 16, B = 20, pad = 8, bw = Math.min(48, (W - pad * 2) / days.length - 8), step = (W - pad * 2) / days.length;
+  const mx = Math.max(...days.map(d => d.n)), Y = n => T + (1 - n / mx) * (H - T - B);
+  const bars = days.map((d, i) => { const x = pad + i * step + (step - bw) / 2, y = Y(d.n);
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - B - y).toFixed(1)}" rx="3" fill="var(--good)" opacity=".85"><title>${fmt(d.t)}: ${d.n} sale${d.n > 1 ? "s" : ""}</title></rect><text x="${(x + bw / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${d.n}</text><text x="${(x + bw / 2).toFixed(1)}" y="${H - 5}" text-anchor="middle" font-size="10" fill="var(--muted)">${fmt(d.t)}</text>`; }).join("");
+  return `<div class="tile salescard" style="padding:10px 14px">${head}<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Number of sales per day, ${days.map(d => fmt(d.t) + ": " + d.n).join("; ")}" style="margin-top:2px;display:block;max-height:110px"><line x1="${pad}" x2="${W - pad}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>${bars}</svg></div>`;
+}
+function bkTile(key, label, value, hint, cls, body) {
+  const open = !!(S.bkOpen && S.bkOpen[key]);
+  return `<div class="tile bk ${cls} ${open ? "open" : ""}" data-do="bk" data-key="${key}" role="button" tabindex="0" aria-expanded="${open}"><span class="clk">${open ? "Close ▲" : "👆 Click me"}</span><div class="l">${label}</div><div class="v">${value}</div><div class="h">${open ? "Tap to close" : hint}</div>${open ? body : ""}</div>`;
+}
+function stockBreakdown(income, comm, s) {
+  const spent = s["Spending on stock (R)"] || 0, received = income - comm, cogs = s["Cost of goods sold (R)"] || 0, wo = s["Write-offs (R)"] || 0;
+  const toWin = Math.max(0, spent - received), pct = spent ? Math.min(100, Math.max(0, received / spent * 100)) : 0;
+  const shelf = Math.max(0, spent - cogs - wo);
+  let est = 0; (S.cat || []).forEach(p => { const pr = p.uber != null ? p.uber : p.wa; if (p.stock > 0 && pr) est += p.stock * pr; });
+  const estRecv = est * 0.655;
+  const r = (label, val, cls) => `<div class="ln ${cls || ""}"><span>${label}</span><span>${val < 0 ? "−" + money(-val) : money(val)}</span></div>`;
+  return `<div class="bkd">
+    ${r("Capital: money spent buying stock", spent)}
+    ${r("Less money received from sales so far (after Uber commission)", -received, "neg")}
+    ${r(toWin > 0 ? "Still to win back (working down to zero)" : "Fully won back", toWin, "tot")}
+    <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct.toFixed(0)}"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <p class="note" style="margin:0 0 10px">${pct.toFixed(1)}% of the capital is back in your pocket.</p>
+    <h2 style="font-size:15px;margin:8px 0 2px">Where the capital is right now</h2>
+    ${r("Cost of the stock already sold", cogs)}
+    ${wo ? r("Written off (damaged or expired)", wo) : ""}
+    ${r("Stock still on the shelf (at what you paid)", shelf)}
+    ${est > 0 ? `<p class="note" style="margin:8px 0 0">If every item still in stock sold at its Uber price, you would receive about ${money(estRecv)} after Uber's commission. This is an estimate from the Catalogue prices.</p>` : ""}
+    <p class="note" style="margin:6px 0 0">The capital reaches zero when money received from sales equals what you spent on stock. After that, everything you receive is profit.</p></div>`;
+}
+function marginBreakdown(income, comm, profit, s) {
+  const cogs = s["Cost of goods sold (R)"] || 0, wo = s["Write-offs (R)"] || 0, received = income - comm;
+  const pc = x => income ? (x / income * 100).toFixed(1) + "%" : "–";
+  const other = income - comm - cogs - wo - profit;
+  const row = (l, v, cls) => `<div class="ln ${cls || ""}"><span>${l}</span><span>${v}</span></div>`;
+  return `<div class="bkd">
+    ${row("Margin = net profit ÷ money coming in", income ? (profit / income * 100).toFixed(1) + "%" : "–", "tot")}
+    ${row(money(profit) + " ÷ " + money(income), income ? "= " + (profit / income * 100).toFixed(1) + "%" : "")}
+    <p class="note" style="margin:6px 0 10px">${income ? "For every R100 a customer pays at menu prices, you keep R" + (profit / income * 100).toFixed(2) + "." : ""}</p>
+    <h2 style="font-size:15px;margin:8px 0 2px">Where the other R100 goes</h2>
+    ${row("Uber commission", pc(comm) + " (" + money(comm) + ")", "neg")}
+    ${row("Cost of the stock sold", pc(cogs) + " (" + money(cogs) + ")", "neg")}
+    ${wo ? row("Write-offs", pc(wo) + " (" + money(wo) + ")", "neg") : ""}
+    ${Math.abs(other) > 0.005 ? row("Promo gifts, discounts and fees", pc(other) + " (" + money(other) + ")", "neg") : ""}
+    ${row("You keep", pc(profit) + " (" + money(profit) + ")", "tot")}
+    <h2 style="font-size:15px;margin:12px 0 2px">Other ways to read it</h2>
+    ${row("Net profit on money you actually receive from Uber", received ? (profit / received * 100).toFixed(1) + "%" : "–")}
+    ${row("Before Uber's commission (old profit figure)", income ? ((profit + comm) / income * 100).toFixed(1) + "%" : "–")}</div>`;
+}
+function netBreakdown(income, comm, profit, s) {
+  const received = income - comm, cogs = s["Cost of goods sold (R)"] || 0, wo = s["Write-offs (R)"] || 0;
+  const other = received - cogs - wo - profit; /* promo gifts, discounts, fees: whatever is left so the lines always add up */
+  const r = (label, val, cls) => `<div class="ln ${cls || ""}"><span>${label}</span><span>${val < 0 ? "−" + money(-val) : money(val)}</span></div>`;
+  return `<div class="bkd">
+    ${r("Money coming in (sales)", income)}
+    ${r("Less Uber commission (34.5%)", -comm, "neg")}
+    ${r("Money you actually receive from Uber", received, "tot")}
+    ${r("Less cost of the stock that was sold", -cogs, "neg")}
+    ${wo ? r("Less write-offs (damaged or expired stock)", -wo, "neg") : ""}
+    ${Math.abs(other) > 0.005 ? r("Less promo gifts, discounts and fees", -other, "neg") : ""}
+    ${r("Net profit (what you actually made)", profit, "tot")}
+    <p class="note" style="margin:8px 0 0">Money spent buying stock is not taken off here. That stock is still on the shelf until it sells.</p></div>`;
+}
+function moneyView() {
+  const s = S.sum, np = S.noPromo, has = s["Profit with promos (R)"] != null;
+  const comm0 = s["Uber commission (R)"] || 0;
+  const names = Object.keys(S.pc || {}), skipped = names.filter(n => np || S.skip[n]);
+  /* take a promo out: add back its discount, fee and gift; commission rises again on the full price */
+  let addBack = 0, addInc = 0, addComm = 0;
+  skipped.forEach(n => { const c = S.pc[n]; addBack += c.disc + c.fee + c.gift; addInc += c.disc; addComm += c.commAdj; });
+  const useSheet = np && has && !names.length;
+  const comm = comm0 + addComm;
+  const real = (has ? s["Profit with promos (R)"] : (s["Profit (R)"] || 0)) - comm0;
+  const profit = useSheet ? s["Profit without promos (R)"] - comm0 : real + addBack - addComm;
+  const income = useSheet ? s["Income without promos (R)"] : (s["Income (R)"] || 0) + addInc;
+  const promoCost = (s["Promo discounts given (R)"] || 0) + (s["Promo fees paid (R)"] || 0) + (s["Promo gifts given (R)"] || 0);
+  const running = activePromos("Uber Eats");
+  const anySkip = skipped.length > 0;
+  const head = np ? "Showing profit as if no promo was applied" : anySkip ? "Showing profit without: " + skipped.map(esc).join(", ") : "Showing real profit with promos";
+  const rows = names.map(n => { const c = S.pc[n], off = np || S.skip[n]; const cost = c.disc + c.fee + c.gift;
+    return `<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#8884);cursor:${np ? "default" : "pointer"}"><input type="checkbox" data-do="skippromo" data-n="${esc(n)}" ${off ? "" : "checked"} ${np ? "disabled" : ""} style="width:24px;height:24px;flex:none"><span style="flex:1"><b>${esc(n)}</b><br><span class="note">${c.orders ? c.orders + " order" + (c.orders > 1 ? "s" : "") + " so far" : "Not used yet"}${c.disc ? ", discounts " + money(c.disc) : ""}${c.fee ? ", fees " + money(c.fee) : ""}${c.gift ? ", gifts " + money(c.gift) : ""}</span></span><b>${money(cost)}</b></label>`; }).join("");
+  const sw = `<div class="panel"><label style="display:flex;gap:12px;align-items:center;font-weight:700;cursor:pointer"><input type="checkbox" data-do="nopromo" ${np ? "checked" : ""} style="width:28px;height:28px;flex:none"><span>${head}</span></label>
+    <p class="note" style="margin:8px 0 0">${np || anySkip ? "What-if: the same sales at full price with the ticked-off promos removed (no discount, gift or promo fee, and Uber commission on the full price). It is not real money." : "Real profit, after promo discounts, free gifts, promo fees and Uber commission. Tick the big box to remove every promo, or untick one promo below to see profit without just that one."}</p>
+    ${rows ? `<div style="margin-top:8px"><b>Promos counted in the profit</b>${rows}</div>` : ""}
+    <p class="note" style="margin:6px 0 0">Promos cost you ${money(promoCost)} so far. ${running.length ? "Running now: " + running.map(p => esc(p.name)).join(", ") + "." : "No promo is running right now."}</p></div>`;
+  const ch = CHANNELS.map(c => [c, s[c] || 0]), max = Math.max(1, ...ch.map(c => c[1]));
+  const recent = S.recent.map(r => `<tr><td>${esc(String(r[0] ?? ""))}</td><td>${esc(r[1])}</td><td class="act-${esc(String(r[2]).toLowerCase())}">${esc(r[2])}</td><td class="num">${esc(r[3])}</td><td>${esc(chLbl(r[4] || ""))}</td><td class="num">${r[5] ? money(r[5]) : ""}</td></tr>`).join("");
+  return salesCard() + sw + `<div class="tiles">
+  <div class="tile"><div class="l">Money coming in</div><div class="v">${money(income)}</div><div class="h">Money from sales</div></div>
+  ${bkTile("stock", "Money spent on stock", money(s["Spending on stock (R)"]), "Tap to see how it works down to zero", "", stockBreakdown(income, comm, s))}
+  ${bkTile("bk", (np ? "Profit without promos" : "Profit") + " after Uber commission", money(profit), "Tap to see how this is worked out", profit >= 0 ? "good" : "bad", netBreakdown(income, comm, profit, s))}
+  ${bkTile("margin", "Margin", income ? (profit / income * 100).toFixed(1) + "%" : "–", "Tap to see how this is worked out", profit >= 0 ? "good" : "bad", marginBreakdown(income, comm, profit, s))}</div></div>
+  <div class="panel"><h2>Money coming in, by where you sold</h2><div class="bars" style="margin-top:12px">${ch.map(([n, v]) => `<div class="bar"><div class="t"><span>${esc(chLbl(n))}</span><span>${money(v)}</span></div><div class="track"><div class="fill" style="width:${(v / max * 100).toFixed(1)}%"></div></div></div>`).join("")}</div></div>
+  <div class="panel"><h2>Latest activity</h2>${recent ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Product</th><th>What</th><th class="num">Qty</th><th>Channel</th><th class="num">Income</th></tr></thead><tbody>${recent}</tbody></table></div>` : `<p class="note">No sales or stock changes yet. They appear here as soon as someone adds stock or records a sale.</p>`}</div>
+  ${feesPanel()}
+  <p class="note">These figures are calculated in the Google Sheet "ROAM Stock Dashboard DB", so the sheet and this page always agree.</p>`;
+}
+function bagsView() {
+  const A = S.assump, pc = x => (Math.round(x * 1000) / 10) + "%";
+  const list = S.bags.map(b => {
+    const i = bagInfo(b), pr = i.profit >= 0 ? "good" : "bad";
+    const rule = !i.lines.length ? "" : !i.worth ? `<div class="banner"><b>No worth yet</b>The items need Uber prices so the worth can be added up.</div>`
+      : `<div class="preview"><b>On Freshi, enter an original price of ${money(i.listed)}.</b> Freshi shows ${pc(A.minDisc)} off, so the customer pays ${money(b.full)}. The items' real Uber worth is ${money(i.worth)}${i.over > 0.005 ? `, so the original price is ${pc(i.over)} above it` : ""}.</div>`;
+    const best = i.worth ? `<p class="note">Strict version: if the original price had to be the real Uber worth (${money(i.worth)}), the customer would pay ${money(i.maxPrice)}, you would receive ${money(i.bestPayout)} and keep ${money(i.bestProfit)} per bag.</p>` : "";
+    return `<div class="bag"><div class="head"><h3>${esc(b.name)}</h3><span style="display:flex;gap:8px"><button class="btn sm" data-do="bagprice" data-row="${b.row}" type="button">Change bag price</button><button class="btn sm danger" data-do="bagdel" data-row="${b.row}" type="button">Delete bag</button></span></div>
+    <div class="nums"><div><div class="l">Customer pays</div><div class="v">${money(b.full)}</div></div><div><div class="l">You receive</div><div class="v">${money(i.payout)}</div></div>
+    <div><div class="l">Cost to make</div><div class="v">${money(i.cost + i.pack)}</div></div><div><div class="l">Profit per bag</div><div class="v" style="color:var(--${pr})">${money(i.profit)}</div></div></div>
+    <div class="sect"><h4>1. What is in the bag</h4>${i.lines.length ? i.lines.map(l => `<div class="item"><span>${l.qty} × ${esc(l.product)}<br><span class="note">costs ${money(l.unit)} · sells for ${l.wa != null ? money(l.wa) : "no price"}${l.ratio ? " (" + (Math.round(l.ratio * 10) / 10) + "× cost)" : ""} · ${l.stock} in stock</span></span><span style="display:flex;gap:10px;align-items:center"><b>${money(l.total)}</b><button class="x" data-do="rmitem" data-row="${l.row}" type="button" aria-label="Remove ${esc(l.product)} from bag">✕</button></span></div>`).join("") + `<div class="ln"><span>Cost of the items</span><span>${money(i.cost)}</span></div><div class="ln tot"><span>Worth (items at Uber prices)</span><span>${money(i.worth)}</span></div>` : `<p class="note">No items yet. Add products from the catalogue.</p>`}</div>
+    ${rule}${best}
+    <div class="sect"><h4>2. Money breakdown (per bag)</h4>
+      <div class="ln"><span>Customer pays</span><span>${money(b.full)}</span></div>
+      <div class="ln neg"><span>Less Freshi fee (${pc(A.fee)})</span><span>−${money(i.fee)}</span></div>
+      <div class="ln tot"><span>You receive</span><span>${money(i.payout)}</span></div>
+      <div class="ln neg"><span>Less cost of the items</span><span>−${money(i.cost)}</span></div>
+      ${i.pack ? `<div class="ln neg"><span>Less packaging</span><span>−${money(i.pack)}</span></div>` : ""}
+      <div class="ln tot"><span>Profit per bag</span><span style="color:var(--${pr})">${money(i.profit)} (${pc(i.margin)})</span></div></div>
+    <div class="acts"><button class="btn primary sm" data-do="bagadd" data-row="${b.row}" type="button">+ Put an item in this bag</button><button class="btn primary sm" data-do="bagsold" data-row="${b.row}" type="button">👆 Click me if you sold this bag</button></div></div>`;
+  }).join("");
+  return `<div class="top"><h2>Freshi bags</h2><button class="btn primary sm" data-do="bagnew" type="button">+ Make a new Freshi bag</button></div>
+  ${list || `<div class="empty">No Freshi bags yet. Press "Make a new Freshi bag", then put items in it.</div>`}
+  <p class="note">The price is what the Freshi customer pays. Freshi keeps ${pc(A.fee)} of it. Freshi shows ${pc(A.minDisc)} off the original price you enter, so enter double what the customer should pay. The bag's "worth" is its items at normal Uber store prices. When a bag sells, every item comes off its own stock count. Best bags use items that sell for much more than they cost.</p>`;
+}
+
+/* ---------- WhatsApp catalogue (one way: this dash -> the Meta sheet) ---------- */
+const clean = t => String(t).replace(/^[=+\-@]+/, "");
+function photoLink(name) { const x = S.photos[String(name).toLowerCase()]; return x && x.status === "Done" ? x.link : ""; }
+const WA_GOOGLE = {"Bakery":["Food, Beverages & Tobacco > Food Items > Bakery","Food & Beverage > Bakery"], "Beverages":["Food, Beverages & Tobacco > Beverages","Food & Beverage > Beverages"], "Snacks":["Food, Beverages & Tobacco > Food Items > Snack Foods","Food & Beverage > Snacks"]};
+const WA_MCAT = {"Koeksisters":"Bakery", "Donuts":"Bakery", "Cakes & Slices (Packs)":"Bakery", "Cakes & Slices (Singles)":"Bakery", "Puddings":"Bakery", "Cold Drinks":"Beverages", "Sweet Treats":"Snacks", "Bakery":"Bakery", "Drinks":"Beverages", "Party Bags":"Snacks", "Clusters":"Snacks", "Biltong":"Snacks", "Snacks":"Snacks"};
+function waRows() {
+  /* Titles, descriptions, categories, photos and "always available" come from the Catalogue sheet (columns P to U), so the feed matches the Uber menu. Blank cells fall back to the product name. */
+  return S.cat.filter(p => p.active && p.wa != null && p.wa > 0).map(p => {
+    const type = p.mcat || WA_TYPE[p.category] || "Snacks", g = WA_GOOGLE[WA_MCAT[type] || "Snacks"];
+    return {id:p.mid || ("ROAM-R" + p.row), title:clean(p.mtitle || p.name), desc:clean(p.mdesc || (p.name + " from ROAM Beyond Taste.")), price:p.wa, stock:(p.always || p.stock > 0) ? "Yes" : "No", type, google:g[0], fb:g[1], image:p.mimg || photoLink(p.name)};
+  }).slice(0, 300);
+}
+function waLine() {
+  const w = S.wa; if (w.error) return "WhatsApp catalogue: could not update (" + esc(w.error) + "). Press Refresh to try again.";
+  return w.at ? `WhatsApp catalogue is up to date (${w.count} products, ${w.at.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}). Products with a WhatsApp price are listed. In stock or out of stock follows your counts.` : "WhatsApp catalogue: updating…";
+}
+async function syncCatalog(force) {
+  const rows = waRows(), sig = JSON.stringify(rows);
+  if (!force && sig === S.wa.sig) return;
+  const pad = (n, v) => rows.length >= 300 ? [] : Array.from({length:300 - rows.length}, () => Array(n).fill(v));
+  try {
+    const full = rows.map(r => [r.id, r.title, r.desc, r.price, Number(r.price).toFixed(2) + " ZAR", r.stock, r.stock === "Yes" ? "in stock" : "out of stock", "new", r.type, r.google, r.fb, "ROAM Beyond Taste", "https://www.facebook.com/1122575054281921", r.image, ""]);
+    const padRows = rows.length >= 300 ? [] : Array.from({length:300 - rows.length}, () => Array(15).fill(""));
+    await run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:CAT_ID, valueInputOption:"RAW", data:[{range:"Products!A2:O301", values:full.concat(padRows)}]});
+    S.wa = {sig, at:new Date(), count:rows.length, error:null};
+  } catch (e) { S.wa.error = String(e.message || "error").slice(0, 120); }
+  if (S.loaded) render();
+}
+
+/* ---------- Photos ---------- */
+const norm = t => String(t).toLowerCase().replace(/\.[a-z0-9]+$/, "").replace(/[^a-z0-9]+/g, " ").trim();
+function matchProduct(fileName) {
+  const f = norm(fileName), act = S.cat.filter(p => p.active);
+  return (act.find(p => norm(p.name) === f) || act.find(p => f && norm(p.name).includes(f)) || act.find(p => f && f.includes(norm(p.name))) || {}).name || "";
+}
+function photosView() {
+  const act = S.cat.filter(p => p.active), have = act.filter(p => photoLink(p.name)).length;
+  const q = S.q.trim().toLowerCase();
+  const rows = act.filter(p => !q || p.name.toLowerCase().includes(q)).sort((a, b) => Number(!!photoLink(a.name)) - Number(!!photoLink(b.name)) || a.name.localeCompare(b.name)).slice(0, 80);
+  const st = p => { const x = S.photos[p.name.toLowerCase()]; return x && x.status === "Done" ? ["ok", "On WhatsApp"] : x && x.status === "Waiting" ? ["wait", "Waiting to be sent"] : ["none", "No photo"]; };
+  const pend = S.pending.map((f, i) => `<div class="pend"><img src="${f.url}" alt=""><div><b>${esc(f.file.name)}</b><br><select data-pend="${i}" aria-label="Which product is this photo of?"><option value="">Choose the product…</option>${act.map(p => `<option value="${esc(p.name)}" ${p.name === f.product ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div></div>`).join("");
+  return `<div class="drop" id="drop" tabindex="0">Drop product photos here<small>Name each photo like the product, for example "Peanut Brittle.jpg". Or tap to choose photos.</small><input id="files" type="file" accept="image/*" multiple hidden></div>
+  ${S.pending.length ? `<div class="list">${pend}</div><div class="acts"><button class="btn primary" data-do="photosave" type="button">Save ${S.pending.length} photo${S.pending.length > 1 ? "s" : ""}</button><button class="btn ghost" data-do="photoclear" type="button">Clear</button></div><div class="err" id="perr" role="alert"></div>` : ""}
+  <div class="panel"><h2>Photos on WhatsApp: ${have} of ${act.length}</h2>
+  <div class="tools" style="margin:10px 0"><input id="q" type="search" placeholder="Search for an item here" value="${esc(S.q)}" aria-label="Search for an item here"><span></span></div>
+  ${rows.map(p => { const [k, t] = st(p); return `<div class="prow"><span>${esc(p.name)}</span><span class="pill ${k}">${t}</span></div>`; }).join("")}</div>
+  <p class="note">After you save photos, Claude copies them to the WhatsApp Images folder and adds their links to the WhatsApp sheet. Tell Claude "send my photos" or wait for the next reminder.</p>`;
+}
+async function prepImage(file, sides = [1000, 800, 640], limit = MAX_B64) {
+  const bmp = await createImageBitmap(file);
+  for (const max of sides) {
+    const sc = Math.min(1, max / Math.max(bmp.width, bmp.height)), w = Math.round(bmp.width * sc), h = Math.round(bmp.height * sc);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.drawImage(bmp, 0, 0, w, h);
+    for (const q of [0.85, 0.75, 0.65, 0.5]) { const b64 = c.toDataURL("image/jpeg", q).split(",")[1]; if (b64.length <= limit) return {b64, w, h}; }
+  }
+  throw new Error("That photo is too big. Try a smaller one.");
+}
+function addFiles(list) {
+  [...list].filter(f => f.type.startsWith("image/")).forEach(f => S.pending.push({file:f, url:URL.createObjectURL(f), product:matchProduct(f.name)}));
+  render();
+}
+async function savePhotos(btn) {
+  const err = document.getElementById("perr"); err.textContent = "";
+  if (S.pending.some(f => !f.product)) { err.textContent = "Choose the product for every photo first."; return; }
+  btn.disabled = true; let done = 0;
+  try {
+    for (const f of S.pending) {
+      btn.textContent = `Saving ${done + 1} of ${S.pending.length}…`;
+      const im = await prepImage(f.file), parts = []; for (let i = 0; i < im.b64.length; i += CHUNK) parts.push(im.b64.slice(i, i + CHUNK));
+      const old = S.photos[f.product.toLowerCase()], row = old ? old.row : ++S.photoRows;
+      await run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Photos!A${row}:J${row}`, value_input_option:"RAW",
+        values:[[f.product, "Waiting", old ? old.link : "", nowStamp(), old ? old.id : "", "image/jpeg", parts[0] || "", parts[1] || "", parts[2] || "", parts[3] || ""]]});
+      S.photos[f.product.toLowerCase()] = {row, status:"Waiting", link:old ? old.link : "", added:nowStamp(), id:old ? old.id : ""}; done++;
+    }
+    S.pending.forEach(f => URL.revokeObjectURL(f.url)); S.pending = [];
+    toast(`${done} photo${done > 1 ? "s" : ""} saved. Claude will send them to WhatsApp.`); await load();
+  } catch (e) { S.pending = S.pending.slice(done); err.textContent = (e && e.code ? explain(e).join(" ") : String((e && e.message) || "Could not save the photos.")).slice(0, 220); btn.disabled = false; btn.textContent = "Try again"; }
+}
+
+/* ---------- Slips (stock comes in by slip: Claude reads the photo, you check it, then it is added) ---------- */
+const col = n => String.fromCharCode(64 + n);
+function fnv(buf) { let h = 0x811c9dc5; for (let i = 0; i < buf.length; i++) { h ^= buf[i]; h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); }
+function prodOptions(sel) { return `<option value="">Choose the product…</option>` + S.cat.filter(p => p.active).sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${esc(p.name)}" ${p.name === sel ? "selected" : ""}>${esc(p.name)}</option>`).join(""); }
+function guessProduct(text, ai) {
+  const n = norm(text); if (S.alias[n]) { const p = byName(S.alias[n]); if (p && p.active) return p.name; }
+  if (ai) { const p = S.cat.find(x => x.active && x.name.toLowerCase() === String(ai).toLowerCase()); if (p) return p.name; }
+  const m = S.cat.find(x => x.active && norm(x.name) === n); return m ? m.name : "";
+}
+function newLine(o = {}) { const product = o.product || ""; const p = byName(product); return {text:o.text || "", product, qty:o.qty ?? "", price:o.price ?? (p ? p.cost : ""), upd:true}; }
+function slipsView() {
+  const sc = S.scan, recent = S.slips.slice(-6).reverse();
+  const drop = `<div class="drop" id="sdrop" tabindex="0">Take or choose a photo of your slip<small>One clear photo of the whole slip. ${S.canScan ? "Claude reads it, then you check every line." : "You will type the lines in."} Tap here to choose the photo.</small><input id="sfile" type="file" accept="image/*" hidden></div>
+    <div class="acts"><button class="btn" data-do="slipmanual" type="button">No slip? Type the stock in</button></div>`;
+  let body = drop;
+  if (sc && sc.state === "reading") body = `<div class="panel">${sc.url ? `<img class="thumb" src="${sc.url}" alt="Your slip">` : ""}<p><b>Claude is reading the slip…</b></p><p class="note">This can take up to a minute. Claude may ask your permission the first time.</p><div class="acts"><button class="btn" data-do="slipcancel" type="button">Cancel</button></div></div>`;
+  else if (sc && sc.state === "review") body = reviewHtml(sc);
+  else if (sc && sc.state === "saving") body = `<div class="panel"><p><b>Adding the stock…</b></p></div>`;
+  else if (sc && sc.state === "done") body = `<div class="panel"><h2>Stock added</h2>${sc.summary.map(l => `<div class="prow"><span>${esc(l.name)}</span><span><b>${l.from} → ${l.to}</b></span></div>`).join("")}
+    ${sc.archiveErr ? `<p class="err">The stock is added, but the slip photo could not be saved (${esc(sc.archiveErr)}). Keep the paper slip and tell Claude.</p>` : `<p class="note">The slip photo is saved. Claude files it in Drive by month.</p>`}
+    <div class="acts"><button class="btn primary" data-do="slipnew" type="button">Add another slip</button></div></div>`;
+  return `<div class="top"><h2>Add stock from a slip</h2></div>${body}
+  <div class="panel"><h2>Recent slips</h2>${recent.length ? recent.map(r => `<div class="prow"><span>${esc(String(r.date))}${r.total ? " · " + money(r.total) : ""}<br><span class="note">${esc(r.note)}</span></span><span class="pill ${r.status === "Waiting" ? "wait" : "ok"}">${r.status === "Filed" ? "Filed in Drive" : r.status === "Typed" ? "Typed in" : "To be filed"}</span></div>`).join("") : `<p class="note">No slips yet.</p>`}</div>`;
+}
+function lineHtml(l, i) {
+  return `<div class="sl" id="sl-${i}">${l.text ? `<div class="t">On the slip: ${esc(l.text)}</div>` : ""}
+    <select data-sl="${i}:product" aria-label="Product">${prodOptions(l.product)}</select>
+    <div class="g3"><div><label>How many</label><input data-sl="${i}:qty" inputmode="numeric" value="${esc(l.qty)}"></div><div><label>Cost each (R)</label><input data-sl="${i}:price" inputmode="decimal" value="${esc(l.price)}"></div><button class="x" data-do="slipdel" data-row="${i}" type="button" aria-label="Remove this line">✕</button></div>
+    <div class="cn" id="cn-${i}">${costNote(l, i)}</div><div class="note" id="lt-${i}">${lineTot(l)}</div></div>`;
+}
+function lineTot(l) { const q = num(l.qty), pr = num(l.price); return q != null && pr != null ? `${money(q * pr)} for this line` : ""; }
+function costNote(l, i) {
+  const p = byName(l.product), pr = num(l.price);
+  if (!p || pr == null || Math.abs(pr - p.cost) < 0.005) return "";
+  return `Cost changes from ${money(p.cost)} to ${money(pr)}. <label><input type="checkbox" data-slc="${i}" ${l.upd ? "checked" : ""}> Update the cost (the Uber price changes with it)</label>`;
+}
+function reviewHtml(sc) {
+  return `<div class="panel">${sc.url ? `<img class="thumb" src="${sc.url}" alt="Your slip">` : ""}
+    <p class="note">${sc.ai ? "Claude read this. Check every line against the paper slip, fix anything wrong, then press Add." : sc.err ? esc(sc.err) : "Type each line from the slip."}</p></div>
+    <div class="list" id="sllines">${sc.lines.map(lineHtml).join("")}</div>
+    <div class="acts"><button class="btn" data-do="slipadd" type="button">+ Add a line</button></div>
+    <div class="panel"><div class="field"><label for="snote">Supplier or note</label><input id="snote" value="${esc(sc.note)}" placeholder="e.g. Makro"></div>
+    <div class="ln tot" style="margin-top:8px"><span>Total of the lines</span><span id="stot">${money(slipSum(sc))}</span></div>
+    <div class="field" style="margin-top:8px"><label for="sread">Total printed on the slip (R)</label><input id="sread" inputmode="decimal" value="${esc(sc.total ?? "")}"></div>
+    <div id="swarn">${slipWarn(sc)}</div></div>
+    <div class="err" id="serr" role="alert"></div>
+    <div class="acts"><button class="btn primary" id="sconfirm" data-do="slipconfirm" type="button">Add this stock</button><button class="btn ghost" data-do="slipcancel" type="button">Cancel</button></div>`;
+}
+const slipSum = sc => sc.lines.reduce((a, l) => a + (num(l.qty) || 0) * (num(l.price) || 0), 0);
+function slipWarn(sc) {
+  const t = num(sc.total), sum = slipSum(sc); let h = "";
+  if (t != null && t > 0 && Math.abs(t - sum) > 0.5) h += `<div class="banner"><b>The lines add up to ${money(sum)} but the slip says ${money(t)}.</b>Check for a missing line, or a wrong number or price. Delivery and VAT lines are not stock, so a small gap can be fine.</div>`;
+  if (sc.dupe) h += `<div class="banner bad"><b>This looks like a slip you already added (${esc(String(sc.dupe.date))}).</b><label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="sdupe" ${sc.ack ? "checked" : ""}> It is a different slip, add it anyway</label></div>`;
+  return h;
+}
+function refreshSlip(i) {
+  const sc = S.scan; if (!sc || sc.state !== "review") return;
+  if (i != null) { const l = sc.lines[i]; const c = document.getElementById("cn-" + i), t = document.getElementById("lt-" + i); if (c) c.innerHTML = costNote(l, i); if (t) t.textContent = lineTot(l); }
+  const st = document.getElementById("stot"); if (st) st.textContent = money(slipSum(sc));
+  const w = document.getElementById("swarn"); if (w) w.innerHTML = slipWarn(sc);
+}
+function slipPrompt() {
+  const cat = S.cat.filter(p => p.active).map(p => `- ${p.name} (we pay ${money(p.cost)} per pack)`).join("\n");
+  const al = Object.entries(S.alias).slice(0, 120).map(([k, v]) => `- "${k}" is ${v}`).join("\n");
+  return `You are reading a photo of a supplier slip or invoice for ROAM Beyond Taste, a small food business in Cape Town. Read every item that was bought. Reply with ONLY JSON, no other words:
+{"supplier": string, "date": "YYYY-MM-DD" or null, "total": number or null, "lines": [{"text": "the item exactly as printed", "qty": number, "unit_price": number, "product": string or null}]}
+Rules: qty is how many packs or units were bought. unit_price is the price in rand for ONE unit (if only a line total is printed, divide it by qty). product must be the exact name from the CATALOGUE below, or null if you are not sure. Do not invent lines. Skip VAT, subtotal, total, delivery, discount and payment lines. The slip may use a comma as the decimal separator.
+CATALOGUE:
+${cat}
+${al ? "KNOWN SLIP NAMES:\n" + al : ""}`;
+}
+function parseJson(t) { const a = t.indexOf("{"), b = t.lastIndexOf("}"); if (a < 0 || b < a) throw new Error("no json"); return JSON.parse(t.slice(a, b + 1)); }
+function scanError(e) {
+  const c = e && e.code;
+  if (c === "not_granted") return "Reading slips is switched off for this page. Allow it when Claude asks, or type the lines in.";
+  if (c === "rate_limited") return "Claude is busy. Wait a minute and try again, or type the lines in.";
+  if (c === "image_rejected") return "Claude could not use that photo. Try a clearer or smaller one, or type the lines in.";
+  return "Claude could not read that slip. Type the lines in instead.";
+}
+async function startScan(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  if (S.scan && S.scan.url) URL.revokeObjectURL(S.scan.url);
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const sc = S.scan = {state:S.canScan ? "reading" : "review", file, url:URL.createObjectURL(file), hash:fnv(buf), lines:[], total:null, note:"", ai:false, err:"", dupe:null, ack:false, date:""};
+  if (!S.canScan) sc.lines = [newLine()];
+  render(); if (!S.canScan) return;
+  try {
+    const { text } = await sample(slipPrompt(), {images:file, cache:false});
+    if (S.scan !== sc) return;
+    const j = parseJson(text);
+    sc.lines = (j.lines || []).map(l => newLine({text:l.text, product:guessProduct(l.text, l.product), qty:num(l.qty) ?? "", price:num(l.unit_price) ?? undefined}));
+    if (!sc.lines.length) { sc.lines = [newLine()]; sc.err = "Claude found no lines. Type them in."; } else sc.ai = true;
+    sc.total = num(j.total); sc.note = String(j.supplier || "").slice(0, 60); sc.date = j.date || "";
+  } catch (e) { if (S.scan !== sc) return; sc.lines = [newLine()]; sc.err = scanError(e); }
+  sc.state = "review"; checkDupe(sc); render();
+}
+function checkDupe(sc) { sc.dupe = S.slips.find(r => (sc.hash && r.fp.split(";")[0] === sc.hash) || (sc.total && r.total && Math.abs(r.total - sc.total) < 0.005 && r.fp.split(";")[1] === String(sc.lines.length))) || null; }
+function slipManual() { S.scan = {state:"review", file:null, url:"", hash:"", lines:[newLine()], total:null, note:"", ai:false, err:"", dupe:null, ack:false, date:""}; render(); }
+async function confirmSlip(btn) {
+  const sc = S.scan, err = document.getElementById("serr"); err.textContent = "";
+  const lines = sc.lines.filter(l => l.product || l.qty !== "" || l.price !== "");
+  if (!lines.length) { err.textContent = "There are no lines to add."; return; }
+  for (const l of lines) {
+    const q = num(l.qty), pr = num(l.price);
+    if (!l.product) { err.textContent = "Choose the product for every line" + (l.text ? " (" + l.text + ")" : "") + "."; return; }
+    if (q == null || q <= 0 || Math.floor(q) !== q) { err.textContent = "Enter a whole number of packs for " + l.product + "."; return; }
+    if (pr == null || pr < 0) { err.textContent = "Enter the cost each for " + l.product + "."; return; }
+  }
+  if (sc.dupe && !sc.ack) { err.textContent = "Tick the box to confirm this is a different slip."; return; }
+  const note = (document.getElementById("snote")?.value || sc.note || "").trim();
+  btn.disabled = true; sc.state = "saving";
+  const t = nowStamp(), by = {};
+  lines.forEach(l => { const k = l.product; by[k] = by[k] || {name:k, qty:0, cost:0}; by[k].qty += num(l.qty); by[k].cost += num(l.qty) * num(l.price); });
+  const summary = Object.values(by).map(x => ({name:x.name, from:byName(x.name).stock, to:byName(x.name).stock + x.qty}));
+  const logRows = lines.map(l => [t, l.product, "ADD", num(l.qty), "", "", +(num(l.qty) * num(l.price)).toFixed(2), "Slip" + (note ? ": " + note : "")]);
+  render();
+  try {
+    await appendLog(logRows);
+  } catch (e) { sc.state = "review"; render(); const er = document.getElementById("serr"); if (er) er.textContent = "Nothing was added. " + explain(e).join(" "); return; }
+  // stock is in. Everything after this is a bonus that must not undo it.
+  let archiveErr = "";
+  try {
+    const upd = lines.filter(l => { const p = byName(l.product); return l.upd && p && Math.abs(num(l.price) - p.cost) >= 0.005; });
+    const seen = {}; const data = []; upd.forEach(l => { const p = byName(l.product); if (!seen[p.row]) { seen[p.row] = 1; data.push({range:`Catalogue!D${p.row}`, values:[[num(l.price)]]}); } });
+    if (data.length) await run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"RAW", data});
+    const newAl = []; lines.forEach(l => { const k = norm(l.text); if (l.text && k && !S.alias[k] && norm(l.product) !== k && !newAl.some(a => norm(a[0]) === k)) newAl.push([l.text, l.product]); });
+    if (newAl.length) await run("GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND", {spreadsheetId:SS, range:"Aliases!A:B", valueInputOption:"RAW", insertDataOption:"INSERT_ROWS", values:newAl});
+  } catch (e) { archiveErr = "cost or name memory not saved"; }
+  try {
+    const total = +(num(document.getElementById("sread")?.value ?? sc.total) ?? slipSum(sc)).toFixed(2) || +slipSum(sc).toFixed(2);
+    const row = S.slipRows + 1, safe = (note || "slip").replace(/[^A-Za-z0-9 ]+/g, "").trim().slice(0, 30);
+    const fname = `${t.slice(0, 10)} ${safe}${total ? " R" + Math.round(total) : ""}.jpg`;
+    if (sc.file) {
+      const im = await prepImage(sc.file, [1400, 1100, 900, 700], MAX_SLIP_B64), parts = []; for (let k = 0; k < im.b64.length; k += CHUNK) parts.push(im.b64.slice(k, k + CHUNK));
+      await run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Slips!A${row}:H${row}`, value_input_option:"RAW", values:[[t, "Waiting", sc.hash + ";" + lines.length, total, note, "", "", fname]]});
+      for (let k = 0; k < parts.length; k++) await run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Slips!${SLIP_COLS[k]}${row}`, value_input_option:"RAW", values:[[parts[k]]]});
+    } else {
+      await run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Slips!A${row}:H${row}`, value_input_option:"RAW", values:[[t, "Typed", "typed;" + lines.length, total, note, "", "", ""]]});
+    }
+  } catch (e) { archiveErr = archiveErr || String((e && e.message) || "photo not saved").slice(0, 80); }
+  if (sc.url) URL.revokeObjectURL(sc.url);
+  S.scan = {state:"done", summary, archiveErr: sc.file ? archiveErr : ""};
+  toast("Stock added"); await load();
+}
+
+/* ---------- Dialogs ---------- */
+function openSheet(html, onReady) {
+  const layer = document.getElementById("layer");
+  layer.innerHTML = `<div class="overlay" id="ov"><form class="sheet" id="frm" novalidate>${html}</form></div>`;
+  const ov = document.getElementById("ov");
+  ov.addEventListener("click", e => { if (e.target === ov) closeSheet(); });
+  document.getElementById("cancel")?.addEventListener("click", closeSheet);
+  onReady(document.getElementById("frm"));
+  const first = layer.querySelector("input:not([type=hidden]),select"); first && first.focus();
+}
+function closeSheet() { document.getElementById("layer").innerHTML = ""; }
+const stepper = (v = 1) => `<div class="stepper"><button type="button" data-step="-1" aria-label="One less">−</button><input id="qty" inputmode="numeric" value="${v}" aria-label="How many"><button type="button" data-step="1" aria-label="One more">+</button></div>`;
+function wireStepper(f, cb) {
+  const q = f.querySelector("#qty");
+  f.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => { q.value = Math.max(1, (parseInt(q.value) || 0) + Number(b.dataset.step)); cb && cb(); }));
+  q.addEventListener("input", () => cb && cb());
+  return () => Math.max(0, Math.floor(Number(q.value) || 0));
+}
+async function submitWith(f, fn, doneMsg) {
+  const btn = f.querySelector("#go"), err = f.querySelector("#err");
+  btn.disabled = true; btn.textContent = "Saving…"; err.textContent = "";
+  try { await fn(); closeSheet(); toast(doneMsg); await load(); }
+  catch (e) { const [t, h] = explain(e); err.textContent = t + " " + h; btn.disabled = false; btn.textContent = "Try again"; }
+}
+/* ---------- Promos (from the Promos tab): which promo is on right now ---------- */
+const DAYN = ["sun","mon","tue","wed","thu","fri","sat"];
+const toDay = x => typeof x === "number" ? new Date(Date.UTC(1899, 11, 30) + Math.round(x) * 86400000).toISOString().slice(0, 10) : String(x || "").slice(0, 10);
+const toMin = x => typeof x === "number" ? Math.round(x * 1440) : (m => m ? (+m[1]) * 60 + (+m[2]) : null)(String(x || "").match(/(\d{1,2}):(\d{2})/));
+function dayOk(spec, d) {
+  const s = String(spec || "").toLowerCase().trim(); if (!s) return true; const i = d.getDay(), m = s.match(/([a-z]{3})[a-z]*\s*-\s*([a-z]{3})/);
+  if (m) { const a = DAYN.indexOf(m[1]), b = DAYN.indexOf(m[2]); return a <= b ? i >= a && i <= b : i >= a || i <= b; }
+  return s.split(/[ ,]+/).some(x => x.slice(0, 3) === DAYN[i]);
+}
+function activePromos(channel, now = new Date()) {
+  const day = nowStamp().slice(0, 10), t = now.getHours() * 60 + now.getMinutes();
+  return (S.promos || []).filter(p => { const f = toMin(p.from), e = toMin(p.to), st = toDay(p.start), en = toDay(p.end);
+    return p.on && (!p.channel || p.channel === channel) && (!st || day >= st) && (!en || day <= en) && dayOk(p.days, now) && (f == null || e == null || (t >= f && t < e)); });
+}
+function stockDialog(kind, p) {
+  const titles = {remove:"Remove stock", sold:"You sold this"};
+  const goText = {remove:"Remove from stock", sold:"Save this sale"}[kind];
+  const defPrice = ch => ch === "Uber Eats" ? p.uber : (ch === "WhatsApp" || ch === "Market") ? (p.wa ?? p.uber) : null;
+  openSheet(`<h3>${titles[kind]}</h3><div class="sub">${esc(p.name)} · ${p.stock} in stock</div>
+    <div class="field"><label for="qty">${kind === "sold" ? "How many did you sell?" : "How many to remove?"}</label>${stepper(1)}</div>
+    ${kind === "sold" ? `<div class="two"><div class="field"><label for="ch">Where did you sell it?</label><select id="ch">${CHANNELS.map(c => `<option value="${c}">${chLbl(c)}</option>`).join("")}</select></div>
+      <div class="field"><label for="price">Price for one (R)</label><input id="price" inputmode="decimal" value="${defPrice("Uber Eats") ?? ""}"></div></div>
+      <div id="promobox" class="field" hidden><div id="pnote" class="preview"></div><div id="mgbox" hidden style="margin-bottom:8px"><div class="preview" id="mgnote"></div><select id="mgsel" aria-label="Which free gift"></select></div><div id="gbox" hidden><label for="otot">Whole order total, before the gift (R)</label><input id="otot" inputmode="decimal" placeholder="e.g. 215"><label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="gift" style="width:22px;height:22px;min-height:0"> Count the free gift on this order (tick it on one item per order only)</label></div></div>` : ""}
+    ${kind === "remove" ? `<div class="field"><label for="why">Reason</label><select id="why"><option>Damaged or expired</option><option>Stock count correction</option><option>Gift or sample</option><option>Other</option></select></div>` : ""}
+    <div class="preview" id="pv"></div><div class="err" id="err" role="alert"></div>
+    <div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">${goText}</button></div>`, f => {
+    let dirty = false, gtouched = false;
+    const qty = wireStepper(f, upd);
+    const priceEl = f.querySelector("#price"), chEl = f.querySelector("#ch");
+    const otEl = f.querySelector("#otot"), giftEl = f.querySelector("#gift");
+    const pf = x => x > 1 ? x / 100 : x;
+    const promoFor = () => chEl ? activePromos(chEl.value) : [];
+    const discP = () => promoFor().find(x => x.pct > 0 && (!x.items.length || x.items.some(i => p.name.toLowerCase().includes(i))));
+    const mg = () => (chEl && chEl.value === "Uber Eats" && p.mgift && p.mgift.length) ? p.mgift.filter(x => byName(x)) : [];
+    const mgSel = f.querySelector("#mgsel"), mgBox = f.querySelector("#mgbox");
+    if (mgSel) { mgSel.innerHTML = (p.mgift || []).map(x => `<option>${esc(x)}</option>`).join(""); mgSel.addEventListener("change", () => upd()); }
+    const mgPick = () => { const l = mg(); if (!l.length) return null; return byName(mgSel && l.includes(mgSel.value) ? mgSel.value : l[0]); };
+    const giftP = () => promoFor().find(x => /free/i.test(x.type) && x.gift && byName(x.gift));
+    const setPrice = () => { if (dirty || !chEl) return; let v = defPrice(chEl.value); const d = discP(); if (v != null && d) v = +(v * (1 - pf(d.pct))).toFixed(2); priceEl.value = v ?? ""; };
+    priceEl && priceEl.addEventListener("input", () => { dirty = true; upd(); });
+    chEl && chEl.addEventListener("change", () => { gtouched = false; setPrice(); upd(); });
+    otEl && otEl.addEventListener("input", () => { gtouched = false; upd(); });
+    giftEl && giftEl.addEventListener("change", () => { gtouched = true; upd(); });
+    // what the active promos cost on this sale: discount (already inside the price) and gift + Uber fee (extra)
+    function promoCalc(n, pr) {
+      if (kind !== "sold" || !chEl) return {names:[], disc:0, fee:0, gift:null, giftCost:0};
+      const d = discP(), g = giftP(), list = defPrice(chEl.value), names = [];
+      let disc = 0, fee = 0, giftCost = 0, gp = null;
+      if (d && list != null && pr != null) { disc = Math.max(0, (list - pr) * n); if (disc > 0) { names.push(d.name); fee += d.fee || 0; } }
+      if (g && giftEl && giftEl.checked) { gp = byName(g.gift); fee += g.fee; giftCost = gp ? gp.cost : 0; names.push(g.name); }
+      return {names, disc, fee, gift:gp, giftCost, g};
+    }
+    function upd() {
+      const n = qty(), pv = f.querySelector("#pv"), go = f.querySelector("#go");
+      let msg = "", bad = "";
+      if (kind === "remove") { msg = `Stock goes from ${p.stock} to ${p.stock - n}.`; if (n > p.stock) bad = `Only ${p.stock} in stock.`; }
+      if (kind === "sold") {
+        const d = discP(), g = giftP(), box = f.querySelector("#promobox"), gbox = f.querySelector("#gbox"), pn = f.querySelector("#pnote");
+        const mgp = mgPick();
+        if (mgBox) { mgBox.hidden = !mgp; if (mgp) f.querySelector("#mgnote").textContent = `Free gift in the Uber menu: ${p.mgq * n} × ${mgp.name}. It comes off stock and its cost (${money(mgp.cost * p.mgq * n)}) is counted automatically.`; if (mgSel) mgSel.hidden = (p.mgift || []).length < 2; }
+        if (box) { box.hidden = !(d || g || mg()); if (gbox) gbox.hidden = !g; }
+        if (g && giftEl && !gtouched) { const ot = num(otEl.value); giftEl.checked = ot != null && ot >= g.min; }
+        const pr = num(priceEl.value), c = promoCalc(n, pr);
+        if (pn) pn.textContent = [d ? `Promo "${d.name}" is on: ${Math.round(pf(d.pct) * 100)}% off is already in the price.` : "", g ? `Promo "${g.name}" is on: free gift on orders of ${money(g.min)} or more.` + (giftEl.checked ? ` This order costs you the gift (${money(c.giftCost)}) and Uber's fee (${money(c.fee)}).` : " Not counted yet.") : ""].filter(Boolean).join(" ");
+        const extra = c.fee + c.giftCost + (mgp ? mgp.cost * p.mgq * n : 0);
+        msg = `Stock goes from ${p.stock} to ${p.stock - n}. ` + (pr != null ? `Income ${money(n * pr)}, profit ${money(n * (pr - p.cost) - extra)}${extra ? " after the promo gift and fee" : ""}.` : "Enter the price.");
+        if (n > p.stock) bad = `Only ${p.stock} in stock. Add stock first.`; else if (pr == null || pr < 0) bad = "Enter the price each.";
+      }
+      pv.textContent = bad || msg; pv.className = "preview" + (bad ? " err" : ""); go.disabled = !n || !!bad;
+    }
+    setPrice(); upd();
+    f.addEventListener("submit", e => { e.preventDefault(); const n = qty(); if (!n) return;
+      submitWith(f, () => {
+        const t = nowStamp();
+        if (kind === "remove") return appendLog([[t, p.name, "REMOVE", n, "", "", +(n * p.cost).toFixed(2), f.querySelector("#why").value]]);
+        const pr = num(priceEl.value), c = promoCalc(n, pr);
+        const rows = [[t, p.name, "SOLD", n, chEl.value, +(n * pr).toFixed(2), +(n * p.cost).toFixed(2), "", c.names.join(", "), +c.disc.toFixed(2), +c.fee.toFixed(2), chEl.value === "Uber Eats" ? +(n * pr * S.assump.uberComm * (1 + S.assump.vat)).toFixed(2) : 0]];
+        if (c.gift) rows.push([t, c.gift.name, "REMOVE", 1, "", "", +c.giftCost.toFixed(2), "PROMO GIFT: " + c.names[c.names.length - 1]]);
+        const mgp = mgPick();
+        if (mgp) rows.push([t, mgp.name, "REMOVE", p.mgq * n, "", "", +(mgp.cost * p.mgq * n).toFixed(2), "PROMO GIFT: Menu gift - " + p.name]);
+        return appendLog(rows);
+      }, kind === "remove" ? `Removed ${n} × ${p.name}` : `Sold ${n} × ${p.name}`);
+    });
+  });
+}
+function prodNewDialog() {
+  const cats = [...new Set(S.cat.map(p => p.category))].sort();
+  const hasM = S.assump.waMargin != null;
+  openSheet(`<h3>New product</h3><div class="sub">It is added to the Master Catalogue in the sheet.</div>
+    <div class="field"><label for="pn">Product name</label><input id="pn" placeholder="e.g. Chocolate Brownies pkt 5"></div>
+    <div class="two"><div class="field"><label for="pc">Category</label><input id="pc" list="cats" placeholder="Pick or type"><datalist id="cats">${cats.map(c => `<option value="${esc(c)}">`).join("")}</datalist></div>
+    <div class="field"><label for="pk">Pieces in the pack</label><input id="pk" inputmode="numeric" value="1"></div></div>
+    <div class="two"><div class="field"><label for="pcost">Cost price per pack (R)</label><input id="pcost" inputmode="decimal"></div>
+    <div class="field"><label for="pw">WhatsApp/Webstore selling price (R)</label><input id="pw" inputmode="decimal" placeholder="${hasM ? "empty = automatic" : "optional"}"></div></div>
+    <div class="preview" id="pv">Enter the cost price. The Uber price is worked out for you.</div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Add product</button></div>`, f => {
+    const v = id => f.querySelector("#" + id).value.trim();
+    const upd = () => { const c = num(v("pcost")); if (c == null || c < 0) { f.querySelector("#pv").textContent = "Enter the cost price. The Uber price is worked out for you."; return; }
+      const r = priceFor(c, num(v("pw"))); f.querySelector("#pv").textContent = `WhatsApp/Webstore ${r.wa != null ? money(r.wa) : "not set"} · Uber ${money(r.uber)} (automatic)`; };
+    f.querySelector("#pcost").addEventListener("input", upd); f.querySelector("#pw").addEventListener("input", upd);
+    f.addEventListener("submit", e => { e.preventDefault();
+      const err = f.querySelector("#err");
+      const name = v("pn"), category = v("pc"), pack = Math.max(1, Math.floor(Number(v("pk")) || 1)), cost = num(v("pcost")), typed = num(v("pw"));
+      if (!name) { err.textContent = "Type the product name."; return; }
+      if (!category) { err.textContent = "Pick or type a category."; return; }
+      if (cost == null || cost < 0) { err.textContent = "Enter what one pack costs you."; return; }
+      if (/^[=+\-@]/.test(name) || /^[=+\-@]/.test(category)) { err.textContent = "Names cannot start with = + - or @."; return; }
+      const same = S.cat.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (same && same.active) { err.textContent = "That product is already in the catalogue."; return; }
+      const row = same ? same.row : (S.cat.reduce((m, p) => Math.max(m, p.row), 1) + 1);
+      const F = `=IF(J${row}<>"",J${row},IF(Assumptions!$B$5="","",ROUND(D${row}*(1+Assumptions!$B$5),2)))`;
+      const E = `=IF(D${row}="","",ROUND(MAX(D${row}*(1+Assumptions!$B$4)/(1-Assumptions!$B$2*(1+Assumptions!$B$3)),IF(F${row}="",0,F${row})),2))`;
+      const G = `=SUMIFS('Stock Log'!$D:$D,'Stock Log'!$B:$B,A${row},'Stock Log'!$C:$C,"ADD")-SUMIFS('Stock Log'!$D:$D,'Stock Log'!$B:$B,A${row},'Stock Log'!$C:$C,"<>ADD")`;
+      // USER_ENTERED so the formulas work. Text fields above were checked for a leading = + - @.
+      submitWith(f, () => run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"USER_ENTERED", data:[
+        {range:`Catalogue!A${row}:D${row}`, values:[[same ? same.name : name, category, pack, cost]]},
+        {range:`Catalogue!E${row}:G${row}`, values:[[E, F, G]]},
+        {range:`Catalogue!I${row}:J${row}`, values:[["Y", typed ?? ""]]}]}), same ? "Product restored" : "Product added");
+    });
+  });
+}
+function prodDelDialog(p) {
+  const inBags = [...new Set(S.items.filter(i => i.product === p.name).map(i => i.bag))];
+  openSheet(`<h3>Delete stock or product</h3><div class="sub">${esc(p.name)} · ${p.stock} in stock</div>
+    <div class="field"><label><input type="radio" name="dm" value="stock" ${p.stock > 0 ? "checked" : "disabled"} style="width:22px;height:22px;min-height:0"> Delete stock I entered by mistake (keep the product)</label>
+    <div id="sbox" ${p.stock > 0 ? "" : "hidden"} style="margin:6px 0 4px 30px"><label for="qty">How many to delete?</label>${stepper(1)}<div class="note" style="margin-top:6px">The most recent stock entries are corrected, as if they were never added. This is not a write-off, so your money figures stay right. If the stock was damaged or sold, use Remove stock or Sold instead.</div></div>
+    <label><input type="radio" name="dm" value="product" ${p.stock > 0 ? "" : "checked"} style="width:22px;height:22px;min-height:0"> Delete the whole product</label></div>
+    <div class="preview" id="pv"></div>
+    <div id="pbox" hidden><div class="preview">${p.stock > 0 ? `${p.stock} are still counted in stock. ` : ""}The product disappears from the catalogue and the stock list. Past sales and stock changes stay in the sheet, so your money figures do not change.</div>
+    ${inBags.length ? `<div class="err">It is used in: ${esc(inBags.join(", "))}. Remove it from those bags too.</div>` : ""}
+    <div class="note">To bring it back later, add a product with the same name.</div></div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Keep it</button><button class="btn danger fill" id="go" type="submit">Delete</button></div>`, f => {
+    const mode = () => (f.querySelector("input[name=dm]:checked") || {}).value || "product";
+    const qty = wireStepper(f, upd);
+    function upd() {
+      const m = mode(), n = qty(); f.querySelector("#pbox").hidden = m !== "product"; f.querySelector("#sbox").hidden = m !== "stock" || p.stock <= 0;
+      const pv = f.querySelector("#pv"), go = f.querySelector("#go");
+      if (m === "stock") { const bad = n < 1 || n > p.stock; pv.hidden = false; pv.textContent = bad ? `Enter a number from 1 to ${p.stock}.` : `Stock goes from ${p.stock} to ${p.stock - n}.`; pv.className = "preview" + (bad ? " err" : ""); go.disabled = bad; go.textContent = "Delete " + (n || "") + " from stock"; }
+      else { pv.hidden = true; go.disabled = false; go.textContent = "Delete product"; }
+    }
+    f.querySelectorAll("input[name=dm]").forEach(r => r.addEventListener("change", upd)); upd();
+    f.addEventListener("submit", e => { e.preventDefault();
+      if (mode() === "product") return submitWith(f, () => run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Catalogue!I${p.row}`, value_input_option:"RAW", values:[["N"]]}), "Deleted " + p.name);
+      const n = qty(); if (n < 1 || n > p.stock) return;
+      submitWith(f, async () => {
+        const d = await run("GOOGLESHEETS_BATCH_GET", {spreadsheet_id:SS, valueRenderOption:"UNFORMATTED_VALUE", ranges:["'Stock Log'!B1:G20000"]});
+        const rows = d.valueRanges[0].values || []; let left = n; const data = [];
+        for (let i = rows.length - 1; i > 0 && left > 0; i--) {
+          const r = rows[i]; if (r[0] !== p.name || r[1] !== "ADD") continue;
+          const q = num(r[2]) || 0; if (q <= 0) continue; const take = Math.min(q, left), cost = num(r[5]) || 0, rem = q - take;
+          data.push({range:`'Stock Log'!D${i + 1}`, values:[[rem]]}, {range:`'Stock Log'!G${i + 1}`, values:[[+(cost * rem / q).toFixed(2)]]}, {range:`'Stock Log'!H${i + 1}`, values:[[(r[6] ? r[6] + " | " : "") + "Corrected: " + take + " entered by mistake"]]});
+          left -= take;
+        }
+        if (left > 0) { const e = new Error("Only " + (n - left) + " of those were added by a stock entry. Use Remove stock for the rest."); e.code = "x"; throw e; }
+        await run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"RAW", data});
+      }, `Deleted ${n} × ${p.name} from stock`);
+    });
+  });
+}
+function prodRenameDialog(p) {
+  const ph0 = S.photos[p.name.toLowerCase()], hasPh = ph0 && ph0.status;
+  openSheet(`<h3>Edit product</h3><div class="sub">${esc(p.name)}</div>
+    <div class="field"><label for="nn">Name</label><input id="nn" value="${esc(p.name)}"></div>
+    <div class="two"><div class="field"><label for="nc">Cost price per pack (R)</label><input id="nc" inputmode="decimal" value="${p.cost}"></div>
+    <div class="field"><label for="nw">WhatsApp/Webstore price (R)</label><input id="nw" inputmode="decimal" value="${p.typed ?? ""}" placeholder="${S.assump.waMargin != null ? "empty = automatic" : "optional"}"></div></div>
+    <div class="preview" id="pv"></div>
+    <div class="field"><label for="ns">Stock on hand (fix it if the count is wrong)</label><input id="ns" inputmode="numeric" value="${p.stock}"></div>
+    <div class="field"><label for="np">Photo ${hasPh ? "(one is saved, choose another to replace it)" : "(none yet)"}</label><input id="np" type="file" accept="image/*"></div>
+    <div class="note">Changing the name moves stock, past sales, bags and the photo to the new name. Nothing is lost.</div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Save</button></div>`, f => {
+    const v = id => f.querySelector("#" + id).value.trim();
+    const upd = () => { const c = num(v("nc")); f.querySelector("#pv").textContent = c == null ? "" : (r => `WhatsApp/Webstore ${r.wa != null ? money(r.wa) : "not set"} · Uber ${money(r.uber)} (automatic)`)(priceFor(c, num(v("nw")))); };
+    f.querySelector("#nc").addEventListener("input", upd); f.querySelector("#nw").addEventListener("input", upd); upd();
+    f.addEventListener("submit", e => { e.preventDefault();
+      const err = f.querySelector("#err"), nn = v("nn"), old = p.name, cost = num(v("nc")), typed = num(v("nw")), file = f.querySelector("#np").files[0], stk = Number(v("ns"));
+      if (v("ns") === "" || !Number.isInteger(stk) || stk < 0) { err.textContent = "Stock must be a whole number, 0 or more."; return; }
+      if (!nn) { err.textContent = "Type the name."; return; }
+      if (cost == null || cost < 0) { err.textContent = "Enter what one pack costs you."; return; }
+      if (/^[=+\-@]/.test(nn)) { err.textContent = "Names cannot start with = + - or @."; return; }
+      if (S.cat.some(x => x.row !== p.row && x.name.toLowerCase() === nn.toLowerCase())) { err.textContent = "Another product already has that name."; return; }
+      submitWith(f, async () => {
+        const data = [{range:`Catalogue!A${p.row}`, values:[[nn]]}, {range:`Catalogue!D${p.row}`, values:[[cost]]}, {range:`Catalogue!J${p.row}`, values:[[typed ?? ""]]}];
+        if (nn !== old) {
+          const d = await run("GOOGLESHEETS_BATCH_GET", {spreadsheet_id:SS, valueRenderOption:"UNFORMATTED_VALUE", ranges:["'Stock Log'!B1:B20000", "Aliases!A1:B600"]});
+          const colv = (d.valueRanges[0].values || []).map(r => r[0] ?? ""), al = d.valueRanges[1].values || [];
+          let first = -1, last = -1; colv.forEach((x, i) => { if (i > 0 && x === old) { if (first < 0) first = i; last = i; } });
+          if (first >= 0) data.push({range:`'Stock Log'!B${first + 1}:B${last + 1}`, values:colv.slice(first, last + 1).map(x => [x === old ? nn : x])});
+          S.items.filter(i => i.product === old).forEach(i => data.push({range:`'Freshi Bag Items'!B${i.row}`, values:[[nn]]}));
+          if (ph0) data.push({range:`Photos!A${ph0.row}`, values:[[nn]]});
+          al.forEach((r, i) => { if (i > 0 && r[1] === old) data.push({range:`Aliases!B${i + 1}`, values:[[nn]]}); });
+        }
+        await run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"RAW", data});
+        if (stk !== p.stock) await appendLog([[nowStamp(), nn, stk > p.stock ? "ADD" : "REMOVE", Math.abs(stk - p.stock), "", "", stk < p.stock ? +((p.stock - stk) * p.cost).toFixed(2) : 0, "Stock count corrected from " + p.stock + " to " + stk]]);
+        if (file) {
+          const im = await prepImage(file), parts = []; for (let i = 0; i < im.b64.length; i += CHUNK) parts.push(im.b64.slice(i, i + CHUNK));
+          const row = ph0 ? ph0.row : ++S.photoRows;
+          await run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`Photos!A${row}:J${row}`, value_input_option:"RAW",
+            values:[[nn, "Waiting", ph0 ? ph0.link : "", nowStamp(), ph0 ? ph0.id : "", "image/jpeg", parts[0] || "", parts[1] || "", parts[2] || "", parts[3] || ""]]});
+        }
+      }, "Saved");
+    });
+  });
+}
+function bagDelDialog(b) {
+  const its = S.items.filter(i => i.bag === b.name);
+  openSheet(`<h3>Delete this bag?</h3><div class="sub">${esc(b.name)}</div>
+    <div class="preview">The bag and its ${its.length} item${its.length === 1 ? "" : "s"} are removed. Past bag sales stay in the sheet, so your money figures do not change. Stock is not changed.</div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Keep it</button><button class="btn danger fill" id="go" type="submit">Delete bag</button></div>`, f => {
+    f.addEventListener("submit", e => { e.preventDefault();
+      const data = [{range:`'Freshi Bags'!A${b.row}:B${b.row}`, values:[["", ""]]}];
+      its.forEach(i => data.push({range:`'Freshi Bag Items'!A${i.row}:D${i.row}`, values:[["", "", "", ""]]}));
+      submitWith(f, () => run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"RAW", data}), "Deleted " + b.name); });
+  });
+}
+function bagNewDialog() {
+  openSheet(`<h3>New Freshi bag</h3>
+    <div class="field"><label for="bn">Bag name</label><input id="bn" placeholder="e.g. Sweet Surprise Bag"></div>
+    <div class="field"><label for="bp">Price the Freshi customer pays (R)</label><input id="bp" inputmode="decimal" placeholder="e.g. 89"></div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Create bag</button></div>`, f => {
+    f.addEventListener("submit", e => { e.preventDefault(); const n = f.querySelector("#bn").value.trim(), pr = num(f.querySelector("#bp").value);
+      const err = f.querySelector("#err");
+      if (!n) { err.textContent = "Give the bag a name."; return; }
+      if (S.bags.some(b => b.name.toLowerCase() === n.toLowerCase())) { err.textContent = "A bag with that name already exists."; return; }
+      if (pr == null || pr <= 0) { err.textContent = "Enter the price the customer pays."; return; }
+      submitWith(f, () => run("GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND", {spreadsheetId:SS, range:"'Freshi Bags'!A:B", valueInputOption:"RAW", insertDataOption:"INSERT_ROWS", values:[[n, pr]]}), "Bag created");
+    });
+  });
+}
+function bagPriceDialog(b) {
+  openSheet(`<h3>Change price</h3><div class="sub">${esc(b.name)}</div>
+    <div class="field"><label for="bp">Price the customer pays (R)</label><input id="bp" inputmode="decimal" value="${b.full}"></div>
+    <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Save</button></div>`, f => {
+    f.addEventListener("submit", e => { e.preventDefault(); const pr = num(f.querySelector("#bp").value);
+      if (pr == null || pr <= 0) { f.querySelector("#err").textContent = "Enter a price."; return; }
+      submitWith(f, () => run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`'Freshi Bags'!B${b.row}`, value_input_option:"RAW", values:[[pr]]}), "Price saved"); });
+  });
+}
+function bagAddDialog(b) {
+  const prods = S.cat.filter(p => p.active).sort((a, c) => a.category.localeCompare(c.category) || a.name.localeCompare(c.name));
+  const groups = [...new Set(prods.map(p => p.category))];
+  openSheet(`<h3>Add item to bag</h3><div class="sub">${esc(b.name)}</div>
+    <div class="field"><label for="sr">Search the catalogue</label><input id="sr" type="search" placeholder="Type to narrow the list"></div>
+    <div class="field"><label for="pr">Product</label><select id="pr" size="1">${groups.map(g => `<optgroup label="${esc(g)}">${prods.filter(p => p.category === g).map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${money(p.cost)})</option>`).join("")}</optgroup>`).join("")}</select></div>
+    <div class="field"><label for="qty">How many in each bag?</label>${stepper(1)}</div>
+    <div class="preview" id="pv"></div><div class="err" id="err" role="alert"></div>
+    <div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Add to bag</button></div>`, f => {
+    const sel = f.querySelector("#pr"), all = [...sel.querySelectorAll("option")].map(o => ({o, g:o.parentNode}));
+    const qty = wireStepper(f, upd);
+    f.querySelector("#sr").addEventListener("input", e => {
+      const q = e.target.value.trim().toLowerCase(); sel.innerHTML = "";
+      groups.forEach(g => { const os = all.filter(x => x.g.label === g && x.o.value.toLowerCase().includes(q)); if (!os.length) return; const og = document.createElement("optgroup"); og.label = g; os.forEach(x => og.appendChild(x.o)); sel.appendChild(og); });
+      upd();
+    });
+    sel.addEventListener("change", upd);
+    function upd() { const p = byName(sel.value), n = qty(), pv = f.querySelector("#pv"); pv.textContent = p ? `${n} × ${p.name} adds ${money(n * p.cost)} to the cost of one bag.` : "No product selected."; f.querySelector("#go").disabled = !p || !n; }
+    upd();
+    f.addEventListener("submit", e => { e.preventDefault(); const p = byName(sel.value), n = qty(); if (!p || !n) return;
+      submitWith(f, () => run("GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND", {spreadsheetId:SS, range:"'Freshi Bag Items'!A:D", valueInputOption:"RAW", insertDataOption:"INSERT_ROWS", values:[[b.name, p.name, n, +(n * p.cost).toFixed(2)]]}), `Added ${n} × ${p.name}`);
+    });
+  });
+}
+/* ---------- Selling a made-to-order bag (Variety Bag 12 / 6, Build a Bag): picks come off each item's own stock ---------- */
+const isMadeBag = p => p.category === "Bags" && /^(variety bag|build a bag)/i.test(p.name);
+function bagSellDialog(p) {
+  const nm = p.name.toLowerCase(), cfg = /12 treats/.test(nm) ? {total:12, max:3, gift:true, pud:true} : /6 treats/.test(nm) ? {total:6, max:3, gift:false, pud:true} : {total:null, max:99, gift:false, pud:false};
+  const isPud = x => /\btub\b/i.test(x.name);
+  const opts = S.cat.filter(x => x.active && x.row !== p.row && x.category !== "Bags" && (!cfg.total || (x.category === "Cakes" && x.pack === 1 && (isPud(x) ? cfg.pud : x.cost < 10))))
+    .sort((a, b) => isPud(a) - isPud(b) || a.name.localeCompare(b.name));
+  const cnt = {}; const giftOpts = cfg.gift ? [["2 Koeksisters", "Traditional Cape Malay Koeksisters (3 Pack)", 1], ["1 FRUGO can", "FRUGO (can)", 1]].map(g => { const q = S.cat.find(x => x.active && x.name.toLowerCase().startsWith(g[1].toLowerCase().slice(0, 25)) && (g[2] ? true : true) && (/koeks/i.test(x.name) ? x.pack === 3 : true)); return q ? [g[0], q, g[2]] : null; }).filter(Boolean) : [];
+  const defPrice = ch => ch === "Uber Eats" ? p.uber : (p.wa ?? p.uber);
+  openSheet(`<h3>You sold a bag</h3><div class="sub">${esc(p.name)}${cfg.total ? " · pick exactly " + cfg.total + " treats (max " + cfg.max + " of each)" : " · pick what was in it"}</div>
+    <div class="two"><div class="field"><label for="ch">Where did you sell it?</label><select id="ch">${CHANNELS.filter(c => c !== "Freshi").map(c => `<option value="${c}">${chLbl(c)}</option>`).join("")}</select></div>
+    <div class="field"><label for="price">Price the customer paid (R), including extras</label><input id="price" inputmode="decimal" value="${defPrice("Uber Eats") ?? ""}"></div></div>
+    ${giftOpts.length ? `<div class="field"><label for="gsel">Free gift</label><select id="gsel">${giftOpts.map((g, i) => `<option value="${i}">${esc(g[0])}</option>`).join("")}</select></div>` : ""}
+    <div class="field"><label for="bsr">Items in the bag</label><input id="bsr" type="search" placeholder="Search for an item here" aria-label="Search for an item here"><div id="picks" style="max-height:38vh;overflow:auto;border:1.5px solid var(--line);border-radius:10px;padding:0 10px"></div></div>
+    <div class="preview" id="pv"></div><div class="err" id="err" role="alert"></div>
+    <div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Save this sale</button></div>`, f => {
+    const picks = f.querySelector("#picks"), chEl = f.querySelector("#ch"), prEl = f.querySelector("#price"), gsel = f.querySelector("#gsel"); let dirty = false, term = "";
+    const sum = () => Object.values(cnt).reduce((a, b) => a + b, 0);
+    const draw = () => { picks.innerHTML = opts.map((x, i) => { if (term && !x.name.toLowerCase().includes(term) && !cnt[x.name]) return ""; const c = cnt[x.name] || 0, over = c > x.stock;
+      return `<div class="prow"><span>${esc(x.name)}<br><span class="note" style="${x.stock <= 0 ? "color:var(--bad)" : ""}">${x.stock <= 0 ? "Out of stock" : x.stock + " in stock"}${isPud(x) && cfg.total ? " · extra charge on Uber" : ""}</span></span><span style="display:flex;gap:6px;align-items:center"><button type="button" class="btn sm" data-bm="${i}:-1" aria-label="One less">−</button><b style="min-width:22px;text-align:center;${over ? "color:var(--bad)" : ""}">${c}</b><button type="button" class="btn sm" data-bm="${i}:1" aria-label="One more">+</button></span></div>`; }).join("") || `<p class="note">No items found.</p>`; upd(); };
+    function calc() { const items = opts.filter(x => cnt[x.name]); const cost = items.reduce((a, x) => a + x.cost * cnt[x.name], 0), g = giftOpts[gsel ? Number(gsel.value) : -1];
+      return {items, cost, g, giftCost:g ? g[1].cost * g[2] : 0}; }
+    function upd() {
+      const n = sum(), c = calc(), pr = num(prEl.value), pv = f.querySelector("#pv"), go = f.querySelector("#go"); let bad = "";
+      const short = c.items.filter(x => cnt[x.name] > x.stock).map(x => x.name), gShort = c.g && c.g[1].stock < c.g[2];
+      if (cfg.total && n !== cfg.total) bad = `Picked ${n} of ${cfg.total}. ${n < cfg.total ? "Add " + (cfg.total - n) + " more." : "Take " + (n - cfg.total) + " off."}`;
+      else if (!cfg.total && !n) bad = "Pick at least one item.";
+      else if (short.length) bad = "Not enough stock: " + short.join(", ");
+      else if (gShort) bad = "Not enough stock for the gift: " + c.g[1].name;
+      else if (pr == null || pr < 0) bad = "Enter the price the customer paid.";
+      const comm = chEl.value === "Uber Eats" && pr != null ? pr * S.assump.uberComm * (1 + S.assump.vat) : 0;
+      pv.textContent = bad || `Items cost ${money(c.cost)}${c.g ? ", gift (" + c.g[0] + ") costs " + money(c.giftCost) : ""}. Uber commission ${money(comm)}. Profit ${money(pr - c.cost - c.giftCost - comm)}.`;
+      pv.className = "preview" + (bad ? " err" : ""); go.disabled = !!bad;
+    }
+    draw();
+    picks.addEventListener("click", e => { const b = e.target.closest("[data-bm]"); if (!b) return; const [i, d] = b.dataset.bm.split(":"), x = opts[Number(i)], c = (cnt[x.name] || 0) + Number(d);
+      if (c < 0 || c > cfg.max) return; cnt[x.name] = c; if (!c) delete cnt[x.name]; draw(); });
+    f.querySelector("#bsr").addEventListener("input", e => { term = e.target.value.trim().toLowerCase(); draw(); });
+    prEl.addEventListener("input", () => { dirty = true; upd(); });
+    chEl.addEventListener("change", () => { if (!dirty) prEl.value = defPrice(chEl.value) ?? ""; upd(); });
+    gsel && gsel.addEventListener("change", upd);
+    f.addEventListener("submit", e => { e.preventDefault(); if (f.querySelector("#go").disabled) return;
+      const c = calc(), pr = num(prEl.value), t = nowStamp(), ch = chEl.value, comm = ch === "Uber Eats" ? +(pr * S.assump.uberComm * (1 + S.assump.vat)).toFixed(2) : 0;
+      const rows = [[t, "Bag: " + p.name, "SOLD", 1, ch, +pr.toFixed(2), +c.cost.toFixed(2), "Picks: " + c.items.map(x => cnt[x.name] + " " + x.name).join(", "), "", 0, 0, comm]];
+      c.items.forEach(x => rows.push([t, x.name, "USED", cnt[x.name], "", "", 0, "In bag: " + p.name]));
+      if (c.g) rows.push([t, c.g[1].name, "REMOVE", c.g[2], "", "", +c.giftCost.toFixed(2), "PROMO GIFT: Menu gift - " + p.name + " (" + c.g[0] + ")"]);
+      submitWith(f, () => appendLog(rows), "Sold 1 × " + p.name);
+    });
+  });
+}
+function bagSoldDialog(b) {
+  const info = bagInfo(b);
+  if (!info.lines.length) { toast("Add items to this bag first."); return; }
+  openSheet(`<h3>You sold a Freshi bag</h3><div class="sub">${esc(b.name)} · you receive ${money(info.payout)} per bag</div>
+    <div class="field"><label for="qty">How many bags did you sell?</label>${stepper(1)}</div>
+    <div class="preview" id="pv"></div><div class="err" id="err" role="alert"></div>
+    <div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Save this sale</button></div>`, f => {
+    const qty = wireStepper(f, upd);
+    function short(n) { return info.lines.filter(l => (byName(l.product)?.stock ?? 0) < l.qty * n).map(l => l.product); }
+    function upd() {
+      const n = qty(), s = short(n), pv = f.querySelector("#pv");
+      pv.textContent = s.length ? "Not enough stock: " + s.join(", ") : `You receive ${money(n * info.payout)}, profit ${money(n * info.profit)}. These come off stock: ` + info.lines.map(l => `${l.qty * n} × ${l.product}`).join(", ") + ".";
+      pv.className = "preview" + (s.length ? " err" : ""); f.querySelector("#go").disabled = !n || s.length > 0;
+    }
+    upd();
+    f.addEventListener("submit", e => { e.preventDefault(); const n = qty(); if (!n || short(n).length) return;
+      const t = nowStamp();
+      const rows = info.lines.map(l => [t, l.product, "USED", l.qty * n, "Freshi", "", 0, "In bag: " + b.name]);
+      rows.push([t, "Bag: " + b.name, "SOLD", n, "Freshi", +(n * info.payout).toFixed(2), +(n * (info.cost + info.pack)).toFixed(2), ""]);
+      submitWith(f, () => appendLog(rows), `Sold ${n} × ${b.name}`);
+    });
+  });
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('.tile.bk')) { e.preventDefault(); e.target.click(); } });
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-tab],[data-do],[data-filter]"); if (!t) return;
+  if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
+  if (t.dataset.filter) { S.filter = S.filter === t.dataset.filter ? "all" : t.dataset.filter; render(); return; }
+  const row = Number(t.dataset.row), p = S.cat.find(x => x.row === row), b = S.bags.find(x => x.row === row);
+  switch (t.dataset.do) {
+    case "remove": case "sold": p && stockDialog(t.dataset.do, p); break;
+    case "bagsell": p && bagSellDialog(p); break;
+    case "nopromo": S.noPromo = !S.noPromo; render(); break;
+    case "skippromo": { const n = t.dataset.n; if (S.skip[n]) delete S.skip[n]; else S.skip[n] = true; render(); break; }
+    case "bk": S.bkOpen = S.bkOpen || {}; S.bkOpen[t.dataset.key] = !S.bkOpen[t.dataset.key]; render(); break;
+    case "prodnew": prodNewDialog(); break;
+    case "proddel": p && prodDelDialog(p); break;
+    case "prodren": p && prodRenameDialog(p); break;
+    case "bagdel": b && bagDelDialog(b); break;
+    case "bagnew": bagNewDialog(); break;
+    case "bagprice": b && bagPriceDialog(b); break;
+    case "bagadd": b && bagAddDialog(b); break;
+    case "bagsold": b && bagSoldDialog(b); break;
+    case "slipmanual": slipManual(); break;
+    case "slipnew": S.scan = null; render(); break;
+    case "slipcancel": if (S.scan && S.scan.url) URL.revokeObjectURL(S.scan.url); S.scan = null; render(); break;
+    case "slipadd": S.scan.lines.push(newLine()); render(); break;
+    case "slipdel": S.scan.lines.splice(row, 1); if (!S.scan.lines.length) S.scan.lines.push(newLine()); render(); break;
+    case "slipconfirm": confirmSlip(t); break;
+    case "photosave": savePhotos(t); break;
+    case "photoclear": S.pending.forEach(f => URL.revokeObjectURL(f.url)); S.pending = []; render(); break;
+    case "rmitem": {
+      const it = S.items.find(x => x.row === row); if (!it) break;
+      t.disabled = true;
+      run("GOOGLESHEETS_VALUES_UPDATE", {spreadsheet_id:SS, range:`'Freshi Bag Items'!A${row}:D${row}`, value_input_option:"RAW", values:[["", "", "", ""]]})
+        .then(() => { toast("Removed " + it.product); load(); }).catch(err => { toast(explain(err)[0]); t.disabled = false; });
+      break;
+    }
+  }
+});
+document.addEventListener("input", e => {
+  const d = e.target.dataset && e.target.dataset.sl;
+  if (d && S.scan) { const [i, f] = d.split(":"); S.scan.lines[Number(i)][f] = e.target.value; refreshSlip(Number(i)); return; }
+  if (e.target.id === "snote" && S.scan) { S.scan.note = e.target.value; return; }
+  if (e.target.id === "sread" && S.scan) { S.scan.total = num(e.target.value); checkDupe(S.scan); refreshSlip(); return; }
+  if (e.target.id === "q") { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = document.getElementById("q"); q.focus(); q.setSelectionRange(pos, pos); }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "cat") { S.category = e.target.value; render(); }
+  if (e.target.id === "files") { addFiles(e.target.files); }
+  if (e.target.id === "sfile") { startScan(e.target.files[0]); }
+  if (e.target.id === "sdupe" && S.scan) { S.scan.ack = e.target.checked; }
+  if (e.target.dataset && e.target.dataset.slc != null && S.scan) { S.scan.lines[Number(e.target.dataset.slc)].upd = e.target.checked; }
+  if (e.target.dataset && e.target.dataset.sl && S.scan) { const [i, f] = e.target.dataset.sl.split(":"); if (f === "product") { const l = S.scan.lines[Number(i)], p = byName(e.target.value); l.product = e.target.value; if (p && (l.price === "" || l.price == null)) { l.price = p.cost; const inp = document.querySelector(`[data-sl="${i}:price"]`); if (inp) inp.value = p.cost; } refreshSlip(Number(i)); } }
+  if (e.target.dataset && e.target.dataset.pend != null) { S.pending[Number(e.target.dataset.pend)].product = e.target.value; }
+});
+const dz = e => e.target.closest && e.target.closest("#drop,#sdrop");
+document.addEventListener("dragover", e => { const d = dz(e); if (d) { e.preventDefault(); d.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const d = dz(e); if (d) d.classList.remove("over"); });
+document.addEventListener("drop", e => { const d = dz(e); if (d) { e.preventDefault(); d.classList.remove("over"); if (d.id === "sdrop") startScan(e.dataTransfer.files[0]); else addFiles(e.dataTransfer.files); } });
+document.addEventListener("click", e => { const d = dz(e); if (d && e.target.type !== "file") document.getElementById(d.id === "sdrop" ? "sfile" : "files").click(); });
+document.getElementById("refresh").addEventListener("click", () => load());
+document.addEventListener("visibilitychange", () => { if (!document.hidden && S.loaded && Date.now() - (S.updated?.getTime() || 0) > 60000) load(); });
+
+(async function init() {
+  render();
+  S.canScan = false;
+  if (!localStorage.getItem("roamKey")) { const k = prompt("ROAM Stock Desk password"); if (k) localStorage.setItem("roamKey", k.trim()); }
+  load();
+})();
+</script>
+
+</body></html>
