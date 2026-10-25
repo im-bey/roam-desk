@@ -213,10 +213,12 @@ async function load() {
   setStatus("busy", "Updating…");
   try {
     const d = await run("GOOGLESHEETS_BATCH_GET", {spreadsheet_id:SS, valueRenderOption:"UNFORMATTED_VALUE",
-      ranges:["Catalogue!A1:U300", "'Freshi Bags'!A1:B100", "'Freshi Bag Items'!A1:D600", "Summary!A1:B30", "Summary!D2:K13", "Assumptions!A1:B12", "Photos!A1:F200", "Slips!A1:H400", "Aliases!A1:B600", "Promos!A1:N30", "Fees!A1:I22", "'Stock Log'!A1:L8000"]});
+      ranges:["Catalogue!A1:W300", "'Freshi Bags'!A1:B100", "'Freshi Bag Items'!A1:D600", "Summary!A1:B30", "Summary!D2:K13", "Assumptions!A1:B12", "Photos!A1:F200", "Slips!A1:H400", "Aliases!A1:B600", "Promos!A1:N30", "Fees!A1:I22", "'Stock Log'!A1:L8000"]});
     const v = d.valueRanges.map(x => x.values || []);
     S.cat = v[0].slice(1).map((r, i) => ({row:i+2, name:r[0], category:r[1] || "Other", pack:num(r[2]) || 1, cost:num(r[3]) || 0,
-      uber:num(r[4]), wa:num(r[5]), stock:num(r[6]) || 0, active:(r[8] || "Y") !== "N", typed:num(r[9]), gift:String(r[12] || ""), mgift:String(r[13] || "").split("|").map(x => x.trim()).filter(Boolean), mgq:num(r[14]) || 1, mid:String(r[15] || "").trim(), mtitle:String(r[16] || "").trim(), mdesc:String(r[17] || "").trim(), mcat:String(r[18] || "").trim(), mimg:String(r[19] || "").trim(), always:String(r[20] || "").trim().toUpperCase() === "Y"})).filter(p => p.name);
+      uber:num(r[4]), wa:num(r[5]), stock:num(r[6]) || 0, active:(r[8] || "Y") !== "N", typed:num(r[9]), gift:String(r[12] || ""), mgift:String(r[13] || "").split("|").map(x => x.trim()).filter(Boolean), mgq:num(r[14]) || 1, mid:String(r[15] || "").trim(), mtitle:String(r[16] || "").trim(), mdesc:String(r[17] || "").trim(), mcat:String(r[18] || "").trim(), mimg:String(r[19] || "").trim(), always:String(r[20] || "").trim().toUpperCase() === "Y", from:String(r[21] || "").trim(), per:num(r[22]) || 5})).filter(p => p.name);
+    /* A pack with a single in column V ("Made from") has no stock of its own: packs on hand = whole sets of singles. */
+    S.cat.forEach(p => { if (!p.from) return; const sg = S.cat.find(x => x.name.toLowerCase() === p.from.toLowerCase() && x !== p); if (!sg) { p.from = ""; return; } p.single = sg; p.stock = Math.floor(Math.max(0, sg.stock) / p.per); });
     S.bags = v[1].slice(1).map((r, i) => ({row:i+2, name:r[0], full:num(r[1]) || 0})).filter(b => b.name);
     S.items = v[2].slice(1).map((r, i) => ({row:i+2, bag:r[0], product:r[1], qty:num(r[2]) || 0, line:num(r[3]) || 0})).filter(x => x.bag && x.product);
     const am = {}; (v[5] || []).slice(1).forEach(r => { if (r[0]) am[String(r[0])] = num(r[1]); });
@@ -284,6 +286,8 @@ function explain(e) {
 const status = p => p.stock <= 0 ? "out" : "ok";
 const statusText = {ok:"In stock", out:"Out"};
 const byName = n => S.cat.find(p => p.name === n);
+/* using a pack takes its singles off the single's stock (USED rows carry no money) */
+const usedRows = (t, p, n) => p.single ? [[t, p.single.name, "USED", n * p.per, "", "", 0, "Singles used for " + n + " × " + p.name]] : [];
 function toast(msg) {
   const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false;
   clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200);
@@ -334,7 +338,7 @@ function stockView() {
   <div class="acts"><button class="btn primary" data-tab="slips" type="button">Stock came in? Click here to add it</button><button class="btn" data-do="prodnew" type="button">+ Add a new product</button>${S.filter !== "all" ? `<button class="btn ghost" data-filter="all" type="button">Show everything</button>` : ""}</div>
   ${promoGiftLine()}
   <div class="list">${rows.length ? rows.map(stockRow).join("") : `<div class="empty">Nothing matches. Try another search.</div>`}</div>
-  <p class="note">Stock goes up when you add a slip. It goes down when you press the Sold button or Remove stock. Delete product only hides it. Your past records are kept.</p>
+  <p class="note">Packs that are made from singles (the 5-packs) are counted from the singles: only count and add the singles. Stock goes up when you add a slip. It goes down when you press the Sold button or Remove stock. Delete product only hides it. Your past records are kept.</p>
   <p class="note">${waLine()}</p>`;
 }
 function profitHtml(p) {
@@ -355,7 +359,7 @@ function promoGiftLine() {
 }
 function stockRow(p) {
   const s = status(p);
-  return `<div class="row"><div><div class="name">${esc(p.name)}</div><div class="cat">${esc(p.category)}${p.pack > 1 ? " · pack of " + p.pack : ""} · ${photoLink(p.name) ? "photo on WhatsApp" : S.photos[p.name.toLowerCase()] ? "photo waiting" : "no photo"}</div>
+  return `<div class="row"><div><div class="name">${esc(p.name)}</div><div class="cat">${esc(p.category)}${p.pack > 1 ? " · pack of " + p.pack : ""}${p.single ? " · counted from " + esc(p.single.name) + " (" + p.per + " singles make 1 pack, " + Math.max(0, p.single.stock) % p.per + " left over)" : ""} · ${photoLink(p.name) ? "photo on WhatsApp" : S.photos[p.name.toLowerCase()] ? "photo waiting" : "no photo"}</div>
   <div class="prices"><div><span class="l">I paid</span><b>${money(p.cost)}</b></div><div><span class="l">WhatsApp/Webstore price</span><b>${p.wa != null ? money(p.wa) : "–"}</b></div><div><span class="l">Uber price</span><b>${p.uber != null ? money(p.uber) : "–"}</b></div></div>${profitHtml(p)}</div>
   <div class="qty">${isMadeBag(p) ? `<span class="pill ok">Made to order</span>` : `<div class="n">${p.stock}</div><span class="pill ${s}">${statusText[s]}</span>`}</div>
   <div class="acts"><button class="btn primary" style="min-height:48px;font-size:17px" data-do="${isMadeBag(p) ? "bagsell" : "sold"}" data-row="${p.row}" type="button">${isMadeBag(p) ? "👆 Click me if you sold this bag" : "👆 Click me if you sold me"}</button></div>
@@ -692,8 +696,9 @@ async function confirmSlip(btn) {
   btn.disabled = true; sc.state = "saving";
   const t = nowStamp(), by = {};
   lines.forEach(l => { const k = l.product; by[k] = by[k] || {name:k, qty:0, cost:0}; by[k].qty += num(l.qty); by[k].cost += num(l.qty) * num(l.price); });
-  const summary = Object.values(by).map(x => ({name:x.name, from:byName(x.name).stock, to:byName(x.name).stock + x.qty}));
-  const logRows = lines.map(l => [t, l.product, "ADD", num(l.qty), "", "", +(num(l.qty) * num(l.price)).toFixed(2), "Slip" + (note ? ": " + note : "")]);
+  const summary = Object.values(by).map(x => { const bp = byName(x.name); return {name:x.name, from:bp.stock, to:bp.single ? Math.floor((bp.single.stock + x.qty * bp.per) / bp.per) : bp.stock + x.qty}; });
+  const logRows = lines.map(l => { const bp = byName(l.product), q = num(l.qty); const tot = +(q * num(l.price)).toFixed(2);
+    return bp && bp.single ? [t, bp.single.name, "ADD", q * bp.per, "", "", tot, "Slip: " + q + " × " + bp.name + (note ? ": " + note : "")] : [t, l.product, "ADD", q, "", "", tot, "Slip" + (note ? ": " + note : "")]; });
   render();
   try {
     await appendLog(logRows);
@@ -822,9 +827,10 @@ function stockDialog(kind, p) {
     f.addEventListener("submit", e => { e.preventDefault(); const n = qty(); if (!n) return;
       submitWith(f, () => {
         const t = nowStamp();
-        if (kind === "remove") return appendLog([[t, p.name, "REMOVE", n, "", "", +(n * p.cost).toFixed(2), f.querySelector("#why").value]]);
+        if (kind === "remove") return appendLog([[t, p.name, "REMOVE", n, "", "", +(n * p.cost).toFixed(2), f.querySelector("#why").value], ...usedRows(t, p, n)]);
         const pr = num(priceEl.value), c = promoCalc(n, pr);
         const rows = [[t, p.name, "SOLD", n, chEl.value, +(n * pr).toFixed(2), +(n * p.cost).toFixed(2), "", c.names.join(", "), +c.disc.toFixed(2), +c.fee.toFixed(2), chEl.value === "Uber Eats" ? +(n * pr * S.assump.uberComm * (1 + S.assump.vat)).toFixed(2) : 0]];
+        rows.push(...usedRows(t, p, n));
         if (c.gift) rows.push([t, c.gift.name, "REMOVE", 1, "", "", +c.giftCost.toFixed(2), "PROMO GIFT: " + c.names[c.names.length - 1]]);
         const mgp = mgPick();
         if (mgp) rows.push([t, mgp.name, "REMOVE", p.mgq * n, "", "", +(mgp.cost * p.mgq * n).toFixed(2), "PROMO GIFT: Menu gift - " + p.name]);
@@ -872,9 +878,9 @@ function prodNewDialog() {
 function prodDelDialog(p) {
   const inBags = [...new Set(S.items.filter(i => i.product === p.name).map(i => i.bag))];
   openSheet(`<h3>Delete stock or product</h3><div class="sub">${esc(p.name)} · ${p.stock} in stock</div>
-    <div class="field"><label><input type="radio" name="dm" value="stock" ${p.stock > 0 ? "checked" : "disabled"} style="width:22px;height:22px;min-height:0"> Delete stock I entered by mistake (keep the product)</label>
-    <div id="sbox" ${p.stock > 0 ? "" : "hidden"} style="margin:6px 0 4px 30px"><label for="qty">How many to delete?</label>${stepper(1)}<div class="note" style="margin-top:6px">The most recent stock entries are corrected, as if they were never added. This is not a write-off, so your money figures stay right. If the stock was damaged or sold, use Remove stock or Sold instead.</div></div>
-    <label><input type="radio" name="dm" value="product" ${p.stock > 0 ? "" : "checked"} style="width:22px;height:22px;min-height:0"> Delete the whole product</label></div>
+    <div class="field"><label><input type="radio" name="dm" value="stock" ${p.stock > 0 && !p.single ? "checked" : "disabled"} style="width:22px;height:22px;min-height:0"> Delete stock I entered by mistake (keep the product)</label>
+    <div id="sbox" ${p.stock > 0 && !p.single ? "" : "hidden"} style="margin:6px 0 4px 30px"><label for="qty">How many to delete?</label>${stepper(1)}<div class="note" style="margin-top:6px">The most recent stock entries are corrected, as if they were never added. This is not a write-off, so your money figures stay right. If the stock was damaged or sold, use Remove stock or Sold instead.</div></div>
+    <label><input type="radio" name="dm" value="product" ${p.stock > 0 && !p.single ? "" : "checked"} style="width:22px;height:22px;min-height:0"> Delete the whole product</label></div>
     <div class="preview" id="pv"></div>
     <div id="pbox" hidden><div class="preview">${p.stock > 0 ? `${p.stock} are still counted in stock. ` : ""}The product disappears from the catalogue and the stock list. Past sales and stock changes stay in the sheet, so your money figures do not change.</div>
     ${inBags.length ? `<div class="err">It is used in: ${esc(inBags.join(", "))}. Remove it from those bags too.</div>` : ""}
@@ -914,7 +920,7 @@ function prodRenameDialog(p) {
     <div class="two"><div class="field"><label for="nc">Cost price per pack (R)</label><input id="nc" inputmode="decimal" value="${p.cost}"></div>
     <div class="field"><label for="nw">WhatsApp/Webstore price (R)</label><input id="nw" inputmode="decimal" value="${p.typed ?? ""}" placeholder="${S.assump.waMargin != null ? "empty = automatic" : "optional"}"></div></div>
     <div class="preview" id="pv"></div>
-    <div class="field"><label for="ns">Stock on hand (fix it if the count is wrong)</label><input id="ns" inputmode="numeric" value="${p.stock}"></div>
+    ${p.single ? `<div class="note">The stock of this pack is worked out from the singles (${esc(p.single.name)}). To fix the count, edit that single.</div><input id="ns" type="hidden" value="${p.stock}">` : `<div class="field"><label for="ns">Stock on hand (fix it if the count is wrong)</label><input id="ns" inputmode="numeric" value="${p.stock}"></div>`}
     <div class="field"><label for="np">Photo ${hasPh ? "(one is saved, choose another to replace it)" : "(none yet)"}</label><input id="np" type="file" accept="image/*"></div>
     <div class="note">Changing the name moves stock, past sales, bags and the photo to the new name. Nothing is lost.</div>
     <div class="err" id="err" role="alert"></div><div class="two"><button class="btn" id="cancel" type="button">Cancel</button><button class="btn primary" id="go" type="submit">Save</button></div>`, f => {
@@ -940,7 +946,7 @@ function prodRenameDialog(p) {
           al.forEach((r, i) => { if (i > 0 && r[1] === old) data.push({range:`Aliases!B${i + 1}`, values:[[nn]]}); });
         }
         await run("GOOGLESHEETS_UPDATE_VALUES_BATCH", {spreadsheet_id:SS, valueInputOption:"RAW", data});
-        if (stk !== p.stock) await appendLog([[nowStamp(), nn, stk > p.stock ? "ADD" : "REMOVE", Math.abs(stk - p.stock), "", "", stk < p.stock ? +((p.stock - stk) * p.cost).toFixed(2) : 0, "Stock count corrected from " + p.stock + " to " + stk]]);
+        if (!p.single && stk !== p.stock) await appendLog([[nowStamp(), nn, stk > p.stock ? "ADD" : "REMOVE", Math.abs(stk - p.stock), "", "", stk < p.stock ? +((p.stock - stk) * p.cost).toFixed(2) : 0, "Stock count corrected from " + p.stock + " to " + stk]]);
         if (file) {
           const im = await prepImage(file), parts = []; for (let i = 0; i < im.b64.length; i += CHUNK) parts.push(im.b64.slice(i, i + CHUNK));
           const row = ph0 ? ph0.row : ++S.photoRows;
